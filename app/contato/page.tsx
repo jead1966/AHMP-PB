@@ -3,9 +3,9 @@ import { MapPin, Phone, Mail, Camera, Users, MessageCircle } from 'lucide-react'
 
 export default function Contato() {
   return (
-    <main className="flex-grow pt-[64px]">
+    <main className="flex-grow pt-[56px]">
       {/* Hero Section */}
-      <section className="relative h-[409px] min-h-[300px] flex items-center justify-center bg-primary-container overflow-hidden">
+      <section className="relative h-[250px] min-h-[200px] flex items-center justify-center bg-primary-container overflow-hidden">
         <div className="absolute inset-0 bg-cover bg-center opacity-40 mix-blend-overlay" style={{ backgroundImage: "url('https://lh3.googleusercontent.com/aida-public/AB6AXuAKoVwbH_SHUWECGr1FshkMKK3ep35GKAB8LfYbKJFmDQ8OTUcAfdgvC-jyV6dKRFkGA4vfc0AxsUigClJXgEq7YxejsNCtzDyxzEmkLwEC-yOKOAj13mFCDUxGboPUn8j4HBe0F9TyAqI5AdVKNPaPJ-ANLtpIk7WElK4GN_i_U1XtpMqsUu9wdB-Q59SzemPzmK0QigIoHdn0TyYax79BPP2rbK4wUn9qCQGNrkJRLi01wMZiCoruFbbE2RtBy9KMzqF_GiDSRK4')" }}></div>
         <div className="absolute inset-0 bg-gradient-to-t from-primary-container to-transparent opacity-80"></div>
         <div className="relative z-10 text-center px-gutter">
@@ -15,12 +15,12 @@ export default function Contato() {
       </section>
 
       {/* Contact Layout */}
-      <section className="max-w-[1400px] mx-auto px-gutter py-lg -mt-[60px] relative z-20">
+      <section className="max-w-[1400px] mx-auto px-gutter py-8 -mt-[40px] relative z-20">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Left Column: Form */}
-          <div className="lg:col-span-7 glass-card rounded-xl p-6 sm:p-8">
-            <h2 className="font-headline-md text-headline-md text-primary-container mb-3 uppercase">Envie uma Mensagem</h2>
-            <p className="font-body-md text-body-md text-on-surface-variant mb-8">Preencha o formulário abaixo e retornaremos o mais breve possível.</p>
+          <div className="lg:col-span-7 glass-card rounded-xl p-6 sm:p-6">
+            <h2 className="font-headline-md text-headline-md text-primary-container mb-2 uppercase">Envie uma Mensagem</h2>
+            <p className="font-body-md text-body-md text-on-surface-variant mb-6">Preencha o formulário abaixo e retornaremos o mais breve possível.</p>
             <form className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="flex flex-col">
@@ -56,7 +56,7 @@ export default function Contato() {
                   </div>
                   <div>
                     <h4 className="font-label-bold text-label-bold text-on-surface uppercase">Endereço</h4>
-                    <p className="font-body-md text-body-md text-on-surface-variant mt-1 text-sm">Rua do Handebol, 123<br />São Paulo, SP - 01000-000</p>
+                    <p className="font-body-md text-body-md text-on-surface-variant mt-1 text-sm">Rua do Handebol, 123<br />João Pessoa, PB - 58000-000</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-4">
@@ -74,7 +74,7 @@ export default function Contato() {
                   </div>
                   <div>
                     <h4 className="font-label-bold text-label-bold text-on-surface uppercase">E-mail</h4>
-                    <p className="font-body-md text-body-md text-on-surface-variant mt-1 text-sm">contato@associacaohandebol.org</p>
+                    <p className="font-body-md text-body-md text-on-surface-variant mt-1 text-sm">ahmp1969@gmail.com</p>
                   </div>
                 </div>
               </div>
@@ -105,7 +105,7 @@ export default function Contato() {
       </section>
 
       {/* Map Section */}
-      <section className="w-full h-[400px] bg-surface-variant relative overflow-hidden">
+      <section className="w-full h-[300px] bg-surface-variant relative overflow-hidden">
         <Image fill src="https://lh3.googleusercontent.com/aida-public/AB6AXuBgt59dyX6St9bZDxtUOY2cj6w5U4Yjr7WEWQgttWzuHBnnPDKTT1GKybLxGS-E2yfAMTNBhB-DGEI5wWuHEo1ujVv-TeKdcMaM1NynIcW8X_g9XXXJ7GE5FksCGLA2XgufxngzuFp8_SadPqvCfNxPGkmyWEgOz8i__D19gfqwopH1OAfubwPj0WJiaRjU0F90gmcHpiVmENQOp43DRlV2DwgichSrHZiz7KkMANeaMwBz1t9RXl4wCgVlvS5ODEpt9d2W0zJORds" alt="Map View" className="object-cover opacity-60 grayscale" referrerPolicy="no-referrer" />
         <div className="absolute inset-0 bg-primary-container mix-blend-color opacity-20"></div>
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center">

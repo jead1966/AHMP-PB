@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { Search, User, Bell, Menu } from 'lucide-react';
 import { usePathname } from 'next/navigation';
@@ -11,10 +12,18 @@ export function Navbar() {
 
   return (
     <header className="docked full-width top-0 border-b-2 border-slate-200 dark:border-blue-800 bg-white dark:bg-blue-950 shadow-sm dark:shadow-none z-50 sticky">
-      <div className="flex justify-between items-center w-full px-8 py-4 max-w-[1400px] mx-auto">
+      <div className="flex justify-between items-center w-full px-8 py-2 max-w-[1400px] mx-auto">
         <div className="flex items-center gap-6">
-          <Link href="/" className="text-2xl font-black text-blue-900 dark:text-white italic flex items-center">
-            AHMP
+          <Link href="/" className="flex items-center">
+            <div className="relative w-12 h-12">
+              <Image 
+                src="/logo.png" 
+                alt="AHMP Logo" 
+                fill 
+                className="object-contain"
+                priority
+              />
+            </div>
           </Link>
           <nav className="hidden md:flex gap-6 items-center">
             <Link

@@ -6,15 +6,14 @@ export function Footer() {
     <footer className="w-full border-t-4 border-orange-500 bg-blue-900 dark:bg-black fade-in transition-opacity mt-auto">
       <div className="w-full py-12 px-8 flex flex-col md:flex-row justify-between items-center max-w-[1400px] mx-auto gap-8 md:gap-0">
         <div className="flex flex-col items-center md:items-start gap-4">
-          <div className="text-xl font-bold text-white uppercase tracking-tight mb-2">Handball Pro</div>
+          <div className="text-xl font-bold text-white uppercase tracking-tight mb-2">AHMP - PB</div>
           <p className="font-body-md text-xs tracking-wide text-blue-200/70">
-            © 2024 Associação Internacional de Handebol. Momento Controlado.
+            © 2021 Associação de Handebol Master da Paraíba.
           </p>
         </div>
         <nav className="flex flex-wrap justify-center gap-6">
           <Link href="#" className="font-body-md text-xs tracking-wide text-blue-200/70 hover:text-white hover:underline decoration-orange-500 decoration-2 underline-offset-4 transition-all">Política de Privacidade</Link>
           <Link href="#" className="font-body-md text-xs tracking-wide text-blue-200/70 hover:text-white hover:underline decoration-orange-500 decoration-2 underline-offset-4 transition-all">Termos de Serviço</Link>
-          <Link href="#" className="font-body-md text-xs tracking-wide text-blue-200/70 hover:text-white hover:underline decoration-orange-500 decoration-2 underline-offset-4 transition-all">Antidopagem</Link>
           <Link href="#" className="font-body-md text-xs tracking-wide text-blue-200/70 hover:text-white hover:underline decoration-orange-500 decoration-2 underline-offset-4 transition-all">Patrocínios</Link>
         </nav>
         <div className="flex items-center gap-4">

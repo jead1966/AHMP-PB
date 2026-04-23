@@ -4,19 +4,18 @@ import { Trophy, Activity, Medal, ChevronRight, Send, Mail, Play, Quote, ArrowRi
 
 export default function Home() {
   return (
-    <main className="flex-grow">
+    <main className="flex-grow pt-16">
       {/* Seção Hero */}
-      <section className="relative w-full flex items-center justify-center overflow-hidden h-[400px]">
+      <section className="relative w-full flex items-center justify-center overflow-hidden h-[300px]">
         <div className="relative z-20 text-center px-4 max-w-4xl mx-auto flex flex-col items-center">
-          <span className="bg-secondary-container text-on-secondary-fixed-variant px-3 py-1 rounded-full font-label-bold uppercase tracking-wider mb-4 border border-secondary-fixed font-black text-[64px]">AHMP</span>
-          <h1 className="font-headline-xl text-headline-xl mb-6 drop-shadow-lg text-[#FF8C00]">Associação de Handebol Master da Paraíba</h1>
+          <h1 className="font-headline-xl text-headline-xl mb-6 drop-shadow-lg text-[#FF8C00]">Associação de Handebol Master da Paraíba - AHMP</h1>
           <p className="font-body-lg mb-8 max-w-2xl mx-auto text-primary-container font-bold text-2xl">Elevando o esporte, unindo atletas. Junte-se à maior comunidade de handebol da região e participe de competições de alto nível.</p>
         </div>
       </section>
 
       {/* Divulgação */}
-      <section className="py-xl px-gutter max-w-[1400px] mx-auto">
-        <div className="flex justify-between items-end mb-10">
+      <section className="py-12 px-gutter max-w-[1400px] mx-auto">
+        <div className="flex justify-between items-end mb-6">
           <div>
             <h2 className="font-headline-lg text-headline-lg text-primary mb-2">Divulgação de Competições</h2>
             <p className="font-body-md text-body-md text-on-surface-variant">Próximos torneios e ligas ativas da temporada.</p>
@@ -54,8 +53,8 @@ export default function Home() {
       </section>
 
       {/* Notícias */}
-      <section className="py-xl px-gutter max-w-[1400px] mx-auto">
-        <div className="flex justify-between items-end mb-10">
+      <section className="py-12 px-gutter max-w-[1400px] mx-auto">
+        <div className="flex justify-between items-end mb-6">
           <div>
             <h2 className="font-headline-lg text-headline-lg text-primary mb-2">Notícias</h2>
             <p className="font-body-md text-body-md text-on-surface-variant">Últimas atualizações e destaques do campeonato.</p>
@@ -64,7 +63,7 @@ export default function Home() {
             Ver Todas <ChevronRight className="w-5 h-5" />
           </Link>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6 auto-rows-[300px]">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 auto-rows-auto md:auto-rows-[300px]">
           <div className="md:col-span-2 md:row-span-2 relative rounded-lg overflow-hidden group cursor-pointer bg-surface-container border border-outline-variant hover:border-primary-container transition-all shadow-sm hover:shadow-md">
             <Image fill src="https://lh3.googleusercontent.com/aida-public/AB6AXuAfDpes7rTGoTYFRd26lzmQv8rb6UV7oUFZOo5Y-9MkjDsvUx4rUY_XUXrP9BaqGUdKUxeZApKK7VWythjuXAUWKe3fgV4qJpOuSBxEybOIQlclxqk9gZFdZUZqml1JDp9s9rlRPXXq6eQuQHgoK7nmW1bqX9IvYyRm_Li8AKC5b796Xw5I3UO9A_nLaXAA8MdOfopRaXpzW_dGvt8AWxNR-8oLvaJyeFhB1VXEf6Woklsz04Kq6bVUU9cm8RUB0ecFsrtb2YjAOnQ" alt="Notícia" className="object-cover transition-transform duration-500 group-hover:scale-105" referrerPolicy="no-referrer" />
             <div className="absolute inset-0 bg-gradient-to-t from-primary via-primary/50 to-transparent"></div>
@@ -74,7 +73,7 @@ export default function Home() {
               <p className="font-body-md text-body-md text-inverse-primary line-clamp-2">A comissão técnica anunciou mudanças significativas para a temporada de 2024, visando aumentar a dinâmica das partidas.</p>
             </div>
           </div>
-          <div className="col-span-1 row-span-1 bg-surface rounded-lg border border-outline-variant overflow-hidden hover:border-primary-container transition-all shadow-sm hover:shadow-md flex flex-col cursor-pointer group">
+          <div className="col-span-1 bg-surface rounded-lg border border-outline-variant overflow-hidden hover:border-primary-container transition-all shadow-sm hover:shadow-md flex flex-col cursor-pointer group">
             <div className="h-40 relative overflow-hidden">
               <Image fill src="https://lh3.googleusercontent.com/aida-public/AB6AXuBi3dY-3ZRR6rjcRgTHJbPA0pFVV3MOvZmHM-qUYS8WCZfFT54sGMOGl-oGGCFokqJUzGCNoCLPA_M02nxlTBvnZv320B_iHqe6IagKEmvuIw4HKhTG0kpZsyJVFcxUsrVt5MY_ZStxPY7oGEFLw0CszGMLGuyNM0zE6zv-TYBo6ZuktyS8S-4600QXsPufT_8XWL4FQ3Up3bamoFF5Zgzuz4Sn15scTfjSm8eUhTI7u6PTa_AIAgCYAg5dJdnsruvgZPqlV7JXpd4" alt="Notícia" className="object-cover transition-transform duration-500 group-hover:scale-105" referrerPolicy="no-referrer" />
             </div>
@@ -85,7 +84,7 @@ export default function Home() {
               </div>
             </div>
           </div>
-          <div className="col-span-1 row-span-1 bg-surface rounded-lg border border-outline-variant overflow-hidden hover:border-primary-container transition-all shadow-sm hover:shadow-md flex flex-col cursor-pointer group">
+          <div className="col-span-1 bg-surface rounded-lg border border-outline-variant overflow-hidden hover:border-primary-container transition-all shadow-sm hover:shadow-md flex flex-col cursor-pointer group">
             <div className="h-40 relative overflow-hidden">
               <Image fill src="https://lh3.googleusercontent.com/aida-public/AB6AXuC5SvxBxBC8GDTlkzemZo-1lgMnPUvnQ9_thz312IDRmiUI2xlVibfibxD5e7xDaNpql63Qm2ETIFYUq4ZEyQKe7ViU1Qui72fizDQ10tnqD833pac7nlF6tlqIhK12axr_qUfhOD3ELAoH7capsoV1a3QCrbL4L8Aqqj3aI7yRaWP0DOt0yMXmwr-TXjMIGJ7igNd6h6ub19JFKKMe35RavIIW0zbRw7_6zvxk3uk_yKn4N2bouwMwNV4nOuUrSF4UGAuB4wwN_8I" alt="Notícia" className="object-cover transition-transform duration-500 group-hover:scale-105" referrerPolicy="no-referrer" />
             </div>
@@ -96,25 +95,12 @@ export default function Home() {
               </div>
             </div>
           </div>
-          <div className="md:col-span-2 row-span-1 bg-primary text-on-primary rounded-lg border border-primary-container overflow-hidden p-8 flex items-center justify-between relative shadow-sm">
-            <div className="relative z-10 max-w-sm">
-              <h4 className="font-headline-md text-headline-md mb-2">Boletim Informativo</h4>
-              <p className="font-body-md text-body-md text-inverse-primary mb-4">Receba as últimas notícias diretamente no seu e-mail.</p>
-              <div className="flex gap-2">
-                <input className="bg-surface/10 border-surface-tint text-on-primary placeholder-outline focus:border-secondary-container focus:ring-1 focus:ring-secondary-container rounded-DEFAULT px-4 py-2 w-full font-body-md text-body-md" placeholder="Seu e-mail" type="email" />
-                <button className="bg-secondary-container text-on-secondary px-4 py-2 rounded-DEFAULT font-label-bold text-label-bold border-2 border-transparent hover:bg-secondary transition-colors">
-                  <Send className="w-5 h-5" />
-                </button>
-              </div>
-            </div>
-            <Mail className="w-32 h-32 text-surface-tint opacity-20 absolute right-8 bottom-[-20px] pointer-events-none transform -rotate-12" />
-          </div>
         </div>
       </section>
 
       {/* Vídeos */}
-      <section className="py-xl px-gutter max-w-[1400px] mx-auto bg-surface-container-low rounded-xl mb-xl mt-12">
-        <div className="flex justify-between items-end mb-10">
+      <section className="py-12 px-gutter max-w-[1400px] mx-auto bg-surface-container-low rounded-xl mb-12 mt-8">
+        <div className="flex justify-between items-end mb-6">
           <div>
             <h2 className="font-headline-lg text-headline-lg text-primary mb-2">Vídeos</h2>
             <p className="font-body-md text-body-md text-on-surface-variant">Melhores momentos e jogadas da semana.</p>
@@ -161,16 +147,16 @@ export default function Home() {
       </section>
 
       {/* Entrevista */}
-      <section className="py-xl relative overflow-hidden bg-primary text-on-primary">
+      <section className="py-12 relative overflow-hidden bg-primary text-on-primary">
         <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[150%] bg-surface-tint opacity-20 transform rotate-12 blur-3xl"></div>
         <div className="absolute bottom-[-20%] right-[-10%] w-[40%] h-[120%] bg-secondary-container opacity-10 transform -rotate-12 blur-3xl"></div>
         <div className="max-w-[1400px] mx-auto px-gutter relative z-10 flex flex-col md:flex-row items-center gap-12">
           <div className="w-full md:w-1/2 relative">
             <div className="aspect-square max-w-md mx-auto rounded-xl overflow-hidden border-4 border-surface-tint/30 shadow-2xl relative">
-              <Image fill src="https://lh3.googleusercontent.com/aida-public/AB6AXuDhkjgb5hsCUipZ7C4Baas3ksvbhsXZBXEA0-U-dgh5Do1ZJknOYT7ZbqjXcSIYkyy3I2D_K14EB0ftxeh2i45EYy35oKW9_1XPKmETOyWfcZyJtw66XxyadqK1QClhxkLN82kDCboUelLvyTfuAW9UeMiGHBpuFE9yj1Ga-yIhrJoePqW5MMroxPp3S9NZobNYnFU2fg54FVE2CLgfn12ncdouJZMWTfmc2s01PGCKt1E6mZkMaxH5apIgJh4DutnIuiOcXcs_4xU" alt="Entrevistado" className="object-cover" referrerPolicy="no-referrer" />
+              <Image fill src="https://picsum.photos/seed/handball-player/800/800" alt="Jogador de Handebol em ação" className="object-cover" referrerPolicy="no-referrer" />
               <div className="absolute bottom-0 left-0 w-full p-6 bg-gradient-to-t from-primary to-transparent">
-                <h3 className="font-headline-md text-headline-md text-on-primary">Carlos &apos;Muralha&apos; Silva</h3>
-                <p className="font-body-md text-body-md text-inverse-primary">Ex-Goleiro & Técnico Estadual</p>
+                <h3 className="font-headline-md text-headline-md text-on-primary">Ricardo &apos;Asas&apos; Oliveira</h3>
+                <p className="font-body-md text-body-md text-inverse-primary">Ponta Esquerda & Artilheiro da Liga</p>
               </div>
             </div>
             <Quote className="w-32 h-32 text-secondary-container absolute top-[-20px] left-[-20px] opacity-50 z-[-1]" fill="currentColor" />
