@@ -13,45 +13,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Divulgação */}
-      <section className="py-12 px-gutter max-w-[1400px] mx-auto">
-        <div className="flex justify-between items-end mb-6">
-          <div>
-            <h2 className="font-headline-lg text-headline-lg text-primary mb-2">Divulgação de Competições</h2>
-            <p className="font-body-md text-body-md text-on-surface-variant">Próximos torneios e ligas ativas da temporada.</p>
-          </div>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          <div className="bg-surface-container-low rounded-xl border border-outline-variant p-6 flex flex-col items-center text-center shadow-sm hover:shadow-md transition-shadow">
-            <div className="w-24 h-24 bg-primary-container rounded-full flex items-center justify-center mb-4">
-              <Trophy className="text-on-primary w-12 h-12" />
-            </div>
-            <span className="bg-green-100 text-green-800 text-xs font-label-bold px-3 py-1 rounded-full mb-3 uppercase">Inscrições Abertas</span>
-            <h3 className="font-headline-md text-headline-md text-on-surface mb-2">Copa Verão 2024</h3>
-            <p className="font-body-md text-body-md text-on-surface-variant mb-6">O maior torneio regional de abertura de temporada para todas as categorias.</p>
-            <Link href="#" className="mt-auto w-full py-3 px-6 bg-primary text-on-primary rounded-DEFAULT font-label-bold text-label-bold hover:bg-primary-container transition-colors">Saiba Mais</Link>
-          </div>
-          <div className="bg-surface-container-low rounded-xl border border-outline-variant p-6 flex flex-col items-center text-center shadow-sm hover:shadow-md transition-shadow">
-            <div className="w-24 h-24 bg-secondary-container rounded-full flex items-center justify-center mb-4">
-              <Activity className="text-on-primary w-12 h-12" />
-            </div>
-            <span className="bg-orange-100 text-orange-800 text-xs font-label-bold px-3 py-1 rounded-full mb-3 uppercase">Em Andamento</span>
-            <h3 className="font-headline-md text-headline-md text-on-surface mb-2">Liga Escolar Sub-17</h3>
-            <p className="font-body-md text-body-md text-on-surface-variant mb-6">Competição focada no desenvolvimento de novos talentos nas escolas parceiras.</p>
-            <Link href="#" className="mt-auto w-full py-3 px-6 bg-primary text-on-primary rounded-DEFAULT font-label-bold text-label-bold hover:bg-primary-container transition-colors">Saiba Mais</Link>
-          </div>
-          <div className="bg-surface-container-low rounded-xl border border-outline-variant p-6 flex flex-col items-center text-center shadow-sm hover:shadow-md transition-shadow">
-            <div className="w-24 h-24 bg-tertiary-container rounded-full flex items-center justify-center mb-4">
-              <Medal className="text-on-tertiary-container w-12 h-12" />
-            </div>
-            <span className="bg-blue-100 text-blue-800 text-xs font-label-bold px-3 py-1 rounded-full mb-3 uppercase">Em Breve</span>
-            <h3 className="font-headline-md text-headline-md text-on-surface mb-2">Torneio dos Campeões</h3>
-            <p className="font-body-md text-body-md text-on-surface-variant mb-6">O confronto final entre os vencedores das ligas regionais do último ano.</p>
-            <Link href="#" className="mt-auto w-full py-3 px-6 bg-primary text-on-primary rounded-DEFAULT font-label-bold text-label-bold hover:bg-primary-container transition-colors">Saiba Mais</Link>
-          </div>
-        </div>
-      </section>
-
       {/* Notícias */}
       <section className="py-12 px-gutter max-w-[1400px] mx-auto">
         <div className="flex justify-between items-end mb-6">
@@ -95,6 +56,25 @@ export default function Home() {
               </div>
             </div>
           </div>
+
+          {/* Card Entrevista (integrado nas Notícias) */}
+          <div className="md:col-span-3 bg-surface rounded-lg border border-outline-variant overflow-hidden hover:border-primary-container transition-all shadow-sm flex flex-col md:flex-row group cursor-pointer mt-2">
+            <div className="w-full md:w-[300px] h-64 md:h-full relative overflow-hidden flex-shrink-0">
+              <Image fill src="/ze.jpg" alt="Ricardo Oliveira" className="object-cover transition-transform duration-500 group-hover:scale-105" referrerPolicy="no-referrer" />
+              <div className="absolute top-4 left-4 bg-primary text-on-primary text-xs px-2 py-1 rounded font-label-bold z-10 shadow-sm">Entrevista da Semana</div>
+            </div>
+            <div className="p-6 md:p-8 flex-grow flex flex-col justify-center">
+              <h3 className="font-headline-md text-headline-md text-primary mb-1">Wellington Souza de Lima</h3>
+              <p className="font-body-sm text-on-surface-variant font-bold uppercase mb-4 tracking-wider">Técnico da AHMP</p>
+              <blockquote className="font-body-md text-on-surface italic border-l-4 border-secondary-container pl-4 mb-6 relative">
+                &quot;O handebol não é apenas força bruta; é sobre a inteligência tática, a leitura do jogo em frações de segundo e a união inquebrável da equipe dentro da quadra.&quot;
+              </blockquote>
+              <Link href="#" className="inline-flex items-center gap-2 font-label-bold text-label-bold text-primary hover:text-secondary-container transition-colors mt-auto">
+                Ler Entrevista Completa <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              </Link>
+            </div>
+          </div>
+
         </div>
       </section>
 
@@ -106,8 +86,8 @@ export default function Home() {
             <p className="font-body-md text-body-md text-on-surface-variant">Melhores momentos e jogadas da semana.</p>
           </div>
         </div>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 relative rounded-lg overflow-hidden group cursor-pointer aspect-video bg-black shadow-md border border-outline-variant">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="relative rounded-lg overflow-hidden group cursor-pointer aspect-video bg-black shadow-md border border-outline-variant">
             <Image fill src="https://lh3.googleusercontent.com/aida-public/AB6AXuBvj3vHRNc8Zfq5C0ORM3Uqgq_QLiysW30JBfoDlb3SxxxFzj7tXXdvM5bCoatN9ky5zDWJybjoblFjYQ38lk7VJcAkf75hPWsvxqagLQCVh0rYyScj6jQxxvdXeZkM-UMM0BaCiSm6zzp-R-IeEr7jwgra0yHZSvgLC-Ca1hVXvbMukgNy7rBcBUiiQZO8Tk5K-PuKsNzXbzAgbxpc7TPV6Tu1Jqu9vjylOfMsaB-EpLvKBKpQSQ8apPp-8bToOsnx3PTIktC2qv8" alt="Vídeo principal" className="object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-300" referrerPolicy="no-referrer" />
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="w-16 h-16 bg-secondary-container rounded-full flex items-center justify-center shadow-lg transform group-hover:scale-110 transition-transform duration-300">
@@ -119,60 +99,60 @@ export default function Home() {
               <h3 className="font-headline-md text-headline-md text-on-primary">Final do Campeonato Regional 2023</h3>
             </div>
           </div>
-          <div className="flex flex-col gap-6">
-            <div className="relative rounded-lg overflow-hidden group cursor-pointer aspect-video bg-black shadow-sm border border-outline-variant">
-              <Image fill src="https://lh3.googleusercontent.com/aida-public/AB6AXuCEJ5s03k5riRfHa7Pq8JYch8CJQtA5QsbY1RSqP3BMHoY9D_lKcdplEd7bo7dsp-ihCh198T7WW6WXzCoUfSaXhvK1MNQKjq4a2isdQcIXMDbJhrDMZMi-HSJKof6joqj27Fi4L1tpW4PRoBmHgKZlNC_A6jraou9lFSDbKHUF8FKKBt9vERNsTFdcg1LGMYoccNxTdSc6immZOAQnMvP6LtRy6GbHq60RxkX1_zPAOdUxahjfqRY5x2-qghsVdwvHMACgwDcYD8c" alt="Vídeo 1" className="object-cover opacity-70 group-hover:opacity-100 transition-opacity duration-300 grayscale group-hover:grayscale-0" referrerPolicy="no-referrer" />
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-12 h-12 bg-white/20 backdrop-blur-md border border-white/50 rounded-full flex items-center justify-center group-hover:bg-secondary-container group-hover:border-transparent transition-all duration-300">
-                  <Play fill="currentColor" className="text-white w-6 h-6 ml-1" />
-                </div>
-              </div>
-              <div className="absolute bottom-0 left-0 w-full p-4 bg-gradient-to-t from-black/80 to-transparent">
-                <h4 className="font-label-bold text-label-bold text-on-primary">Top 10 Defesas da Rodada</h4>
+          <div className="relative rounded-lg overflow-hidden group cursor-pointer aspect-video bg-black shadow-sm border border-outline-variant">
+            <Image fill src="https://lh3.googleusercontent.com/aida-public/AB6AXuCEJ5s03k5riRfHa7Pq8JYch8CJQtA5QsbY1RSqP3BMHoY9D_lKcdplEd7bo7dsp-ihCh198T7WW6WXzCoUfSaXhvK1MNQKjq4a2isdQcIXMDbJhrDMZMi-HSJKof6joqj27Fi4L1tpW4PRoBmHgKZlNC_A6jraou9lFSDbKHUF8FKKBt9vERNsTFdcg1LGMYoccNxTdSc6immZOAQnMvP6LtRy6GbHq60RxkX1_zPAOdUxahjfqRY5x2-qghsVdwvHMACgwDcYD8c" alt="Vídeo 1" className="object-cover opacity-70 group-hover:opacity-100 transition-opacity duration-300 grayscale group-hover:grayscale-0" referrerPolicy="no-referrer" />
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-16 h-16 bg-white/20 backdrop-blur-md border border-white/50 rounded-full flex items-center justify-center group-hover:bg-secondary-container group-hover:border-transparent transition-all duration-300">
+                <Play fill="currentColor" className="text-white w-8 h-8 ml-1" />
               </div>
             </div>
-            <div className="relative rounded-lg overflow-hidden group cursor-pointer aspect-video bg-black shadow-sm border border-outline-variant">
-              <Image fill src="https://lh3.googleusercontent.com/aida-public/AB6AXuA4G_w5U7mBJgtNi1epYmy1rlkCsfwTvRlAMMDzKuv7KaeLa4agMglXAMtnFi32p09KIGI3PgxOReYe0bUay7KNqlsP856fVLrjbkrpDHaH7vFFO4FRLG1Z4E3Ljcesp09jG63n-ZzLEtN6zCXqRBJ8csruzQcQQVAqYtZ8G414VxZAFzKyI83QoN478V7AVoNr2szzIwVpP3qaTxnRzwgH_0I8_T_kpHnPeqYsQH9eL_WGP7sSItKCf8eUy0WI2TqvKv3xM_tgtQ0" alt="Vídeo 2" className="object-cover opacity-70 group-hover:opacity-100 transition-opacity duration-300 grayscale group-hover:grayscale-0" referrerPolicy="no-referrer" />
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-12 h-12 bg-white/20 backdrop-blur-md border border-white/50 rounded-full flex items-center justify-center group-hover:bg-secondary-container group-hover:border-transparent transition-all duration-300">
-                  <Play fill="currentColor" className="text-white w-6 h-6 ml-1" />
-                </div>
-              </div>
-              <div className="absolute bottom-0 left-0 w-full p-4 bg-gradient-to-t from-black/80 to-transparent">
-                <h4 className="font-label-bold text-label-bold text-on-primary">Entrevista: Técnico da Seleção</h4>
-              </div>
+            <div className="absolute bottom-0 left-0 w-full p-6 bg-gradient-to-t from-black/80 to-transparent">
+              <h3 className="font-headline-md text-headline-md text-on-primary">Top 10 Defesas da Rodada</h3>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Entrevista */}
-      <section className="py-12 relative overflow-hidden bg-primary text-on-primary">
-        <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[150%] bg-surface-tint opacity-20 transform rotate-12 blur-3xl"></div>
-        <div className="absolute bottom-[-20%] right-[-10%] w-[40%] h-[120%] bg-secondary-container opacity-10 transform -rotate-12 blur-3xl"></div>
-        <div className="max-w-[1400px] mx-auto px-gutter relative z-10 flex flex-col md:flex-row items-center gap-12">
-          <div className="w-full md:w-1/2 relative">
-            <div className="aspect-square max-w-md mx-auto rounded-xl overflow-hidden border-4 border-surface-tint/30 shadow-2xl relative">
-              <Image fill src="https://picsum.photos/seed/handball-player/800/800" alt="Jogador de Handebol em ação" className="object-cover" referrerPolicy="no-referrer" />
-              <div className="absolute bottom-0 left-0 w-full p-6 bg-gradient-to-t from-primary to-transparent">
-                <h3 className="font-headline-md text-headline-md text-on-primary">Ricardo &apos;Asas&apos; Oliveira</h3>
-                <p className="font-body-md text-body-md text-inverse-primary">Ponta Esquerda & Artilheiro da Liga</p>
-              </div>
-            </div>
-            <Quote className="w-32 h-32 text-secondary-container absolute top-[-20px] left-[-20px] opacity-50 z-[-1]" fill="currentColor" />
+      {/* Divulgação */}
+      <section className="py-12 px-gutter max-w-[1400px] mx-auto">
+        <div className="flex justify-between items-end mb-6">
+          <div>
+            <h2 className="font-headline-lg text-headline-lg text-primary mb-2">Divulgação de Competições</h2>
+            <p className="font-body-md text-body-md text-on-surface-variant">Próximos torneios e ligas ativas da temporada.</p>
           </div>
-          <div className="w-full md:w-1/2 flex flex-col justify-center">
-            <h2 className="font-headline-lg text-headline-lg text-secondary-fixed mb-6">Entrevista da Semana</h2>
-            <blockquote className="font-headline-md text-headline-md font-light leading-relaxed mb-8 italic text-inverse-primary border-l-4 border-secondary-container pl-6 py-2 bg-white/5 backdrop-blur-sm rounded-r-lg">
-              &quot;O handebol não é apenas força bruta; é sobre a inteligência tática, a leitura do jogo em frações de segundo e a união inquebrável da equipe dentro da quadra.&quot;
-            </blockquote>
-            <Link href="#" className="inline-flex items-center gap-2 font-label-bold text-label-bold text-secondary-container hover:text-secondary-fixed-dim transition-colors group self-start">
-              Ler Entrevista Completa
-              <ArrowRight className="group-hover:translate-x-1 transition-transform w-5 h-5" />
-            </Link>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="bg-surface-container-low rounded-xl border border-outline-variant p-6 flex flex-col items-center text-center shadow-sm hover:shadow-md transition-shadow">
+            <div className="w-24 h-24 bg-primary-container rounded-full flex items-center justify-center mb-4">
+              <Trophy className="text-on-primary w-12 h-12" />
+            </div>
+            <span className="bg-green-100 text-green-800 text-xs font-label-bold px-3 py-1 rounded-full mb-3 uppercase">Inscrições Abertas</span>
+            <h3 className="font-headline-md text-headline-md text-on-surface mb-2">Copa Verão 2024</h3>
+            <p className="font-body-md text-body-md text-on-surface-variant mb-6">O maior torneio regional de abertura de temporada para todas as categorias.</p>
+            <Link href="#" className="mt-auto w-full py-3 px-6 bg-primary text-on-primary rounded-DEFAULT font-label-bold text-label-bold hover:bg-primary-container transition-colors">Saiba Mais</Link>
+          </div>
+          <div className="bg-surface-container-low rounded-xl border border-outline-variant p-6 flex flex-col items-center text-center shadow-sm hover:shadow-md transition-shadow">
+            <div className="w-24 h-24 bg-secondary-container rounded-full flex items-center justify-center mb-4">
+              <Activity className="text-on-primary w-12 h-12" />
+            </div>
+            <span className="bg-orange-100 text-orange-800 text-xs font-label-bold px-3 py-1 rounded-full mb-3 uppercase">Em Andamento</span>
+            <h3 className="font-headline-md text-headline-md text-on-surface mb-2">Liga Escolar Sub-17</h3>
+            <p className="font-body-md text-body-md text-on-surface-variant mb-6">Competição focada no desenvolvimento de novos talentos nas escolas parceiras.</p>
+            <Link href="#" className="mt-auto w-full py-3 px-6 bg-primary text-on-primary rounded-DEFAULT font-label-bold text-label-bold hover:bg-primary-container transition-colors">Saiba Mais</Link>
+          </div>
+          <div className="bg-surface-container-low rounded-xl border border-outline-variant p-6 flex flex-col items-center text-center shadow-sm hover:shadow-md transition-shadow">
+            <div className="w-24 h-24 bg-tertiary-container rounded-full flex items-center justify-center mb-4">
+              <Medal className="text-on-tertiary-container w-12 h-12" />
+            </div>
+            <span className="bg-blue-100 text-blue-800 text-xs font-label-bold px-3 py-1 rounded-full mb-3 uppercase">Em Breve</span>
+            <h3 className="font-headline-md text-headline-md text-on-surface mb-2">Torneio dos Campeões</h3>
+            <p className="font-body-md text-body-md text-on-surface-variant mb-6">O confronto final entre os vencedores das ligas regionais do último ano.</p>
+            <Link href="#" className="mt-auto w-full py-3 px-6 bg-primary text-on-primary rounded-DEFAULT font-label-bold text-label-bold hover:bg-primary-container transition-colors">Saiba Mais</Link>
           </div>
         </div>
       </section>
+
+
     </main>
   );
 }

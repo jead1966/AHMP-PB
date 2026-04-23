@@ -9,6 +9,21 @@ import { supabase } from '@/lib/supabase';
 export default function Cadastro() {
   const [isLoading, setIsLoading] = useState(false);
   const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [birthDate, setBirthDate] = useState('');
+
+  const calculateAge = (dob: string) => {
+    if (!dob) return null;
+    const birthDateObj = new Date(dob);
+    const today = new Date();
+    let age = today.getFullYear() - birthDateObj.getFullYear();
+    const m = today.getMonth() - birthDateObj.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birthDateObj.getDate())) {
+      age--;
+    }
+    return age;
+  };
+
+  const currentAge = calculateAge(birthDate);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -19,7 +34,10 @@ export default function Cadastro() {
     
     const associadoData = {
       full_name: formData.get('fullName'),
+      popular_name: formData.get('popularName'),
       birthday: formData.get('birthday'),
+      age: formData.get('age') ? parseInt(formData.get('age') as string) : null,
+      identity_document: formData.get('identityDocument'),
       document_id: formData.get('documentId'),
       email: formData.get('email'),
       phone: formData.get('phone'),
@@ -47,7 +65,7 @@ export default function Cadastro() {
     <main className="flex-grow flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 mt-12 mb-12">
       <div className="max-w-3xl w-full space-y-8 bg-surface-container-lowest p-8 sm:p-10 rounded-xl shadow-sm border border-outline-variant/30">
         <div className="text-center">
-          <h1 className="font-headline-lg text-headline-lg text-primary mb-2">Junte-se à Liga</h1>
+          <h1 className="font-headline-lg text-headline-lg text-primary mb-2">Junte-se à AHMP</h1>
           <p className="font-body-md text-body-md text-on-surface-variant">Cadastre-se para começar sua jornada no Handebol Pro</p>
         </div>
         
@@ -99,12 +117,25 @@ export default function Cadastro() {
                 <label className="block font-label-bold text-label-bold text-on-surface mb-1" htmlFor="fullName">Nome Completo</label>
                 <input className="block w-full rounded-lg border-outline-variant bg-surface-container-lowest py-3 px-4 text-on-surface focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-body-md border" id="fullName" name="fullName" placeholder="ex: Maria Silva" type="text" />
               </div>
-              <div>
-                <label className="block font-label-bold text-label-bold text-on-surface mb-1" htmlFor="birthday">Data de Nascimento</label>
-                <input className="block w-full rounded-lg border-outline-variant bg-surface-container-lowest py-3 px-4 text-on-surface focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-body-md text-on-surface-variant border" id="birthday" name="birthday" type="date" />
+              <div className="sm:col-span-2">
+                <label className="block font-label-bold text-label-bold text-on-surface mb-1" htmlFor="popularName">Nome Popular</label>
+                <input className="block w-full rounded-lg border-outline-variant bg-surface-container-lowest py-3 px-4 text-on-surface focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-body-md border" id="popularName" name="popularName" placeholder="ex: Mariazinha" type="text" />
               </div>
               <div>
-                <label className="block font-label-bold text-label-bold text-on-surface mb-1" htmlFor="documentId">ID / CPF</label>
+                <label className="block font-label-bold text-label-bold text-on-surface mb-1" htmlFor="birthday">Data de Nascimento</label>
+                <input className="block w-full rounded-lg border-outline-variant bg-surface-container-lowest py-3 px-4 text-on-surface focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-body-md text-on-surface-variant border" id="birthday" name="birthday" type="date" value={birthDate} onChange={(e) => setBirthDate(e.target.value)} />
+              </div>
+              <div>
+                <label className="block font-label-bold text-label-bold text-on-surface mb-1">Idade</label>
+                <input type="hidden" name="age" value={currentAge !== null ? currentAge.toString() : ''} />
+                <input className="block w-full rounded-lg border-outline-variant bg-surface-container py-3 px-4 text-on-surface-variant cursor-not-allowed outline-none font-body-md border font-bold" disabled placeholder="Automático" type="text" value={currentAge !== null ? `${currentAge} anos` : ''} readOnly />
+              </div>
+              <div>
+                <label className="block font-label-bold text-label-bold text-on-surface mb-1" htmlFor="identityDocument">Identidade (RG)</label>
+                <input className="block w-full rounded-lg border-outline-variant bg-surface-container-lowest py-3 px-4 text-on-surface focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-body-md border" id="identityDocument" name="identityDocument" placeholder="00.000.000-0" type="text" />
+              </div>
+              <div>
+                <label className="block font-label-bold text-label-bold text-on-surface mb-1" htmlFor="documentId">CPF</label>
                 <input className="block w-full rounded-lg border-outline-variant bg-surface-container-lowest py-3 px-4 text-on-surface focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-body-md border" id="documentId" name="documentId" placeholder="000.000.000-00" type="text" />
               </div>
               <div>
@@ -130,10 +161,12 @@ export default function Cadastro() {
                 <label className="block font-label-bold text-label-bold text-on-surface mb-1" htmlFor="category">Categoria</label>
                 <select className="block w-full rounded-lg border-outline-variant bg-surface-container-lowest py-3 px-4 text-on-surface focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-body-md border" id="category" name="category" defaultValue="">
                   <option disabled value="">Selecionar Categoria</option>
-                  <option value="junior">Júnior</option>
-                  <option value="senior">Sênior</option>
-                  <option value="amateur">Amador</option>
-                  <option value="pro">Profissional</option>
+                  <option value="adu">Adu</option>
+                  <option value="35+">35+</option>
+                  <option value="42+">42+</option>
+                  <option value="49+">49+</option>
+                  <option value="55+">55+</option>
+                  <option value="60+">60+</option>
                 </select>
               </div>
               <div>
