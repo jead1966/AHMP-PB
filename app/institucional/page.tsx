@@ -38,7 +38,7 @@ export default function Institucional() {
           {/* Presidente */}
           <div className="md:col-span-2 bg-white border border-outline-variant p-6 rounded-xl flex flex-col md:flex-row gap-6 items-center shadow-sm hover:shadow-md transition-shadow">
             <div className="w-48 h-48 relative flex-shrink-0">
-              <Image fill src="https://lh3.googleusercontent.com/aida-public/AB6AXuC7BgUTAJ8vtK881rWaZmlRiWsVsxL2kAlQABTN_ZympL5qz28gwX4W0UjZOXWolibMDBARZloMhAN0cghrPt890wawcSYVJrD9SuEgX7WWV7raZzl2pBSDVKdE0OYXLBtCB5zr25h9NwnnwPcsayYMQcA91oKT7tfkp4Xl6kewOM4xQdA6R7quK9gN-zjpqfpE4ALUe6PTf67gsVtKNWGR9robGKZ7cVE3R4SBBX1dw-WvJ2hveIW-z5LuyRl5lu0XFHYIoAEfqKs" alt="Presidente" className="object-cover rounded-lg grayscale hover:grayscale-0 transition-all" referrerPolicy="no-referrer" />
+              <Image fill src="https://ue5crmwsvgdovcsb.public.blob.vercel-storage.com/josaniel.jpg" alt="Presidente" className="object-cover rounded-lg grayscale hover:grayscale-0 transition-all" referrerPolicy="no-referrer" />
             </div>
             <div>
               <span className="text-secondary font-label-bold uppercase tracking-wider text-sm">Presidente</span>
@@ -53,7 +53,7 @@ export default function Institucional() {
           {/* Vice */}
           <div className="bg-surface-container-low border border-outline-variant p-6 rounded-xl flex flex-col items-center text-center shadow-sm">
             <div className="w-32 h-32 relative mb-6">
-              <Image fill src="https://lh3.googleusercontent.com/aida-public/AB6AXuA7zPhH9j_cPObYadhs3WhdU-swvWn28X7eWysA9VzBfN-fcTxAy6i28T4RrssSA2mdHHKlczNsf_tkd_wJPCewQSbcpbyfeSFeX9AnCQz3ipf8iEIfX6LKA058Mx62JqA8nZySy4AF7lfxZPntfmMlzWJh8Xe4QhChrDM6kcx8B2BB34dhg_K1pR64rIpVgF8hUSIPufrLX7pqAqDYF_F4aWdaNH6sYWUroDC9CZE42JU7jXmKGIyJwZ6HGjiq-1g_DW6vnIifkoI" alt="Vice-Presidente" className="object-cover rounded-full border-4 border-white shadow-lg" referrerPolicy="no-referrer" />
+              <Image fill src="https://ue5crmwsvgdovcsb.public.blob.vercel-storage.com/romulo.jpg" alt="Vice-Presidente" className="object-cover rounded-full border-4 border-white shadow-lg" referrerPolicy="no-referrer" />
             </div>
             <span className="text-secondary font-label-bold uppercase tracking-wider text-xs">Vice-Presidente</span>
             <h3 className="font-headline-md text-headline-md text-primary mt-1 text-xl">Rômulo Ramos</h3>
@@ -62,7 +62,7 @@ export default function Institucional() {
           {/* Diretor Técnico */}
           <div className="bg-surface-container-low border border-outline-variant p-6 rounded-xl flex flex-col items-center text-center shadow-sm">
             <div className="w-32 h-32 relative mb-6">
-              <Image fill src="/ahmpNormando.png" alt="Diretor Técnico - Normando Filho" className="object-cover rounded-full border-4 border-white shadow-lg" referrerPolicy="no-referrer" />
+              <Image fill src="https://ue5crmwsvgdovcsb.public.blob.vercel-storage.com/ahmpNormando.png" alt="Diretor Técnico - Normando Filho" className="object-cover rounded-full border-4 border-white shadow-lg" referrerPolicy="no-referrer" />
             </div>
             <span className="text-secondary font-label-bold uppercase tracking-wider text-xs">Diretor Técnico</span>
             <h3 className="font-headline-md text-headline-md text-primary mt-1 text-xl">Normando Filho</h3>
@@ -71,7 +71,7 @@ export default function Institucional() {
           {/* Diretor Financeiro */}
           <div className="bg-surface-container-low border border-outline-variant p-6 rounded-xl flex flex-col items-center text-center shadow-sm">
             <div className="w-32 h-32 relative mb-6">
-              <Image fill src="/ahmpCristhiano.png" alt="Diretor Financeiro - Cristhiano Furlaneto" className="object-cover rounded-full border-4 border-white shadow-lg" referrerPolicy="no-referrer" />
+              <Image fill src="https://ue5crmwsvgdovcsb.public.blob.vercel-storage.com/ahmpCristhiano.png" alt="Diretor Financeiro - Cristhiano Furlaneto" className="object-cover rounded-full border-4 border-white shadow-lg" referrerPolicy="no-referrer" />
             </div>
             <span className="text-secondary font-label-bold uppercase tracking-wider text-xs">Diretor Financeiro</span>
             <h3 className="font-headline-md text-headline-md text-primary mt-1 text-xl">Cristhiano Furlaneto</h3>
@@ -80,7 +80,7 @@ export default function Institucional() {
           {/* Diretor Comunicação */}
           <div className="bg-surface-container-low border border-outline-variant p-6 rounded-xl flex flex-col items-center text-center shadow-sm">
             <div className="w-32 h-32 relative mb-6">
-              <Image fill src="/ahmpGaldino.png" alt="Comunicação - José Galdino" className="object-cover rounded-full border-4 border-white shadow-lg" referrerPolicy="no-referrer" />
+              <Image fill src="https://ue5crmwsvgdovcsb.public.blob.vercel-storage.com/ahmpGaldino.png" alt="Comunicação - José Galdino" className="object-cover rounded-full border-4 border-white shadow-lg" referrerPolicy="no-referrer" />
             </div>
             <span className="text-secondary font-label-bold uppercase tracking-wider text-xs">Comunicação</span>
             <h3 className="font-headline-md text-headline-md text-primary mt-1 text-xl">José Galdino</h3>

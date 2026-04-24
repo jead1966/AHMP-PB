@@ -17,7 +17,7 @@ export function Navbar() {
           <Link href="/" className="flex items-center">
             <div className="relative w-12 h-12">
               <Image 
-                src="/logo.png" 
+                src="https://ue5crmwsvgdovcsb.public.blob.vercel-storage.com/logo.png" 
                 alt="AHMP Logo" 
                 fill 
                 className="object-contain"

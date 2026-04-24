@@ -60,7 +60,7 @@ export default function Home() {
           {/* Card Entrevista (integrado nas Notícias) */}
           <div className="md:col-span-3 bg-surface rounded-lg border border-outline-variant overflow-hidden hover:border-primary-container transition-all shadow-sm flex flex-col md:flex-row group cursor-pointer mt-2">
             <div className="w-full md:w-[300px] h-64 md:h-full relative overflow-hidden flex-shrink-0">
-              <Image fill src="/ze.jpg" alt="Ricardo Oliveira" className="object-cover transition-transform duration-500 group-hover:scale-105" referrerPolicy="no-referrer" />
+              <Image fill src="https://ue5crmwsvgdovcsb.public.blob.vercel-storage.com/Ze.jpg" alt="Wellington Lima" className="object-cover transition-transform duration-500 group-hover:scale-105" referrerPolicy="no-referrer" />
               <div className="absolute top-4 left-4 bg-primary text-on-primary text-xs px-2 py-1 rounded font-label-bold z-10 shadow-sm">Entrevista da Semana</div>
             </div>
             <div className="p-6 md:p-8 flex-grow flex flex-col justify-center">
