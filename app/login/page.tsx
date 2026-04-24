@@ -37,77 +37,53 @@ export default function Login() {
   };
 
   return (
-    <main className="min-h-screen bg-surface-container-lowest flex flex-col md:flex-row w-full">
-      {/* Left section: Image/Branding */}
-      <div className="hidden md:flex w-full md:w-1/2 bg-primary relative items-center justify-center p-12 overflow-hidden overflow-y-hidden pt-24 min-h-[50vh] md:min-h-screen">
-        <div className="absolute inset-0 bg-gradient-to-br from-[#00113a] to-[#00265c] opacity-90 z-0"></div>
-        {/* Subtle pattern or graphic over background */}
-        <div className="absolute inset-0 z-0" style={{ backgroundImage: 'radial-gradient(circle at 10% 20%, rgba(253, 139, 0, 0.15) 0%, transparent 40%), radial-gradient(circle at 90% 80%, rgba(253, 139, 0, 0.1) 0%, transparent 40%)' }}></div>
-        
-        <div className="relative z-10 w-full max-w-lg text-white flex flex-col items-start pt-16">
-          <div className="bg-white/10 p-4 rounded-2xl backdrop-blur-sm border border-white/10 mb-8 inline-flex">
-            <LogIn className="w-10 h-10 text-orange-500" />
-          </div>
-          <h1 className="text-5xl lg:text-6xl font-bold font-lexend mb-6 leading-tight">
-            Associação de <br/>
-            <span className="text-orange-500">Handebol</span> <br/>
-            Master
-          </h1>
-          <p className="text-lg text-blue-100 font-work-sans mb-10 max-w-md leading-relaxed">
-            Acesso exclusivo para os associados da AHMP. Gerencie sua conta, pague mensalidades e fique por dentro do mundo do handebol.
-          </p>
+    <main className="min-h-[calc(100vh-64px)] bg-slate-50 flex items-center justify-center p-4 pt-20 pb-20">
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="w-full max-w-[500px] bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-100"
+      >
+        <div className="bg-primary p-8 text-white text-center relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-[#00113a] to-[#00265c] opacity-90 z-0"></div>
           
-          <div className="flex items-center gap-4 text-sm font-bold tracking-wider uppercase text-blue-200">
-            <span className="w-12 h-px bg-orange-500"></span>
-            Elevando o esporte
+          <div className="relative z-10 flex flex-col items-center">
+            <div className="bg-white/10 p-3 rounded-2xl backdrop-blur-sm border border-white/20 mb-4 inline-flex shadow-sm">
+              <LogIn className="w-8 h-8 text-orange-500" />
+            </div>
+            <h1 className="text-2xl font-bold font-lexend mb-1">
+              Bem-vindo à AHMP
+            </h1>
+            <p className="text-sm text-blue-100 font-work-sans">
+              Área Exclusiva do Associado
+            </p>
           </div>
         </div>
-      </div>
 
-      {/* Right section: Login Form */}
-      <div className="w-full md:w-1/2 flex items-center justify-center p-6 sm:p-12 pt-28 md:pt-12 bg-white min-h-screen">
-        <motion.div 
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          className="w-full max-w-md flex flex-col"
-        >
-          <div className="mb-10 block md:hidden">
-            <div className="w-16 h-16 bg-primary-container rounded-2xl flex items-center justify-center mb-6">
-              <LogIn className="text-primary w-8 h-8" />
-            </div>
-            <h1 className="text-4xl font-bold font-lexend text-primary mb-2">Login</h1>
-            <p className="text-gray-500 font-work-sans">Acesse seu painel de associado</p>
-          </div>
-          
-          <div className="hidden md:block mb-10">
-            <h2 className="text-4xl font-bold font-lexend text-primary mb-2">Bem-vindo de volta</h2>
-            <p className="text-gray-500 font-work-sans">Faça login na sua conta para continuar</p>
-          </div>
-
+        <div className="p-8">
           {error && (
-            <div className="mb-8 p-4 bg-red-50 text-red-800 rounded-xl flex items-start gap-3 border border-red-100 shadow-sm">
+            <div className="mb-6 p-4 bg-red-50 text-red-800 rounded-xl flex items-start gap-3 border border-red-100 shadow-sm transition-all">
               <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
               <p className="text-sm font-medium">{error}</p>
             </div>
           )}
 
-          <form onSubmit={handleLogin} className="space-y-6">
-            <div className="group">
-              <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2" htmlFor="email">E-mail</label>
+          <form onSubmit={handleLogin} className="space-y-5">
+            <div>
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5" htmlFor="email">E-mail</label>
               <input
                 id="email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="block w-full rounded-xl border border-gray-200 bg-gray-50 py-4 px-5 text-gray-900 focus:bg-white focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 outline-none transition-all font-work-sans"
+                className="block w-full rounded-xl border border-slate-200 bg-slate-50 py-3.5 px-4 text-slate-900 focus:bg-white focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 outline-none transition-all font-work-sans text-sm"
                 placeholder="seu@email.com"
                 required
               />
             </div>
 
-            <div className="group">
-              <div className="flex items-center justify-between mb-2">
-                <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest" htmlFor="password">Senha</label>
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest" htmlFor="password">Senha</label>
                 <Link href="#" className="text-xs font-bold text-orange-500 hover:text-orange-600 transition-colors">Esqueceu a senha?</Link>
               </div>
               <input
@@ -115,7 +91,7 @@ export default function Login() {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="block w-full rounded-xl border border-gray-200 bg-gray-50 py-4 px-5 text-gray-900 focus:bg-white focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 outline-none transition-all font-work-sans"
+                className="block w-full rounded-xl border border-slate-200 bg-slate-50 py-3.5 px-4 text-slate-900 focus:bg-white focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 outline-none transition-all font-work-sans text-sm"
                 placeholder="••••••••"
                 required
               />
@@ -124,7 +100,7 @@ export default function Login() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full mt-2 py-4 bg-[#FF8C00] text-white hover:bg-[#e67e00] rounded-xl font-bold uppercase tracking-wider text-sm transition-all flex items-center justify-center gap-2 disabled:opacity-70 shadow-lg shadow-orange-500/20 hover:shadow-orange-500/40 active:scale-[0.98]"
+              className="w-full mt-6 py-3.5 bg-orange-500 text-white hover:bg-orange-600 rounded-xl font-bold uppercase tracking-wider text-sm transition-all flex items-center justify-center gap-2 disabled:opacity-70 shadow-md shadow-orange-500/20 active:scale-[0.98]"
             >
               {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : (
                 <>Entrar na Minha Área <ArrowRight className="w-4 h-4 ml-1" /></>
@@ -132,14 +108,14 @@ export default function Login() {
             </button>
           </form>
 
-          <div className="mt-12 pt-8 border-t border-gray-100 flex flex-col sm:flex-row items-center font-work-sans text-sm text-gray-500">
-            <span className="mb-2 sm:mb-0">Ainda não é associado da AHMP?</span>
-            <Link href="/cadastro" className="sm:ml-2 font-bold text-primary hover:text-orange-500 transition-colors underline decoration-2 underline-offset-4">
-              Cadastre-se agora
+          <div className="mt-8 pt-6 border-t border-slate-100 flex flex-col text-center font-work-sans text-sm text-slate-500">
+            <span className="mb-1">Ainda não é associado da AHMP?</span>
+            <Link href="/cadastro" className="font-bold text-blue-800 hover:text-orange-500 transition-colors underline decoration-2 underline-offset-4">
+              Faça seu cadastro agora
             </Link>
           </div>
-        </motion.div>
-      </div>
+        </div>
+      </motion.div>
     </main>
   );
 }
