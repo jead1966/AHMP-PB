@@ -3,13 +3,17 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { User, Camera, Edit2, Activity, UserSquare, CheckCircle2, AlertCircle } from 'lucide-react';
+import { User, Camera, Edit2, Activity, UserSquare, CheckCircle2, AlertCircle, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { useRouter } from 'next/navigation';
 
 export default function Cadastro() {
   const [isLoading, setIsLoading] = useState(false);
   const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [errorMessage, setErrorMessage] = useState('');
   const [birthDate, setBirthDate] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const router = useRouter();
 
   const calculateAge = (dob: string) => {
     if (!dob) return null;
@@ -29,33 +33,59 @@ export default function Cadastro() {
     event.preventDefault();
     setIsLoading(true);
     setStatus('idle');
+    setErrorMessage('');
 
     const formData = new FormData(event.currentTarget);
-    
-    const associadoData = {
-      full_name: formData.get('fullName'),
-      popular_name: formData.get('popularName'),
-      birthday: formData.get('birthday'),
-      age: formData.get('age') ? parseInt(formData.get('age') as string) : null,
-      identity_document: formData.get('identityDocument'),
-      document_id: formData.get('documentId'),
-      email: formData.get('email'),
-      phone: formData.get('phone'),
-      category: formData.get('category'),
-      position: formData.get('position'),
-      club: formData.get('club'),
-    };
+    const email = formData.get('email') as string;
+    const password = formData.get('password') as string;
+    const fullName = formData.get('fullName') as string;
 
     try {
-      const { error } = await supabase.from('associados').insert([associadoData]);
+      // 1. Create Auth User
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: fullName,
+          }
+        }
+      });
 
-      if (error) throw error;
+      if (authError) throw authError;
+      if (!authData.user) throw new Error('Falha ao criar usuário.');
+
+      // 2. Store in Database
+      const associadoData = {
+        full_name: fullName,
+        popular_name: formData.get('popularName'),
+        birthday: formData.get('birthday'),
+        age: currentAge,
+        identity_document: formData.get('identityDocument'),
+        document_id: formData.get('documentId'),
+        email: email,
+        phone: formData.get('phone'),
+        category: formData.get('category'),
+        position: formData.get('position'),
+        club: formData.get('club'),
+        user_id: authData.user.id,
+        status: 'pendente',
+      };
+
+      const { error: dbError } = await supabase
+        .from('associados')
+        .insert([associadoData]);
+
+      if (dbError) throw dbError;
       
       setStatus('success');
-      (event.target as HTMLFormElement).reset();
-    } catch (error) {
+      setTimeout(() => {
+        router.push('/painel-associado');
+      }, 2000);
+    } catch (error: any) {
       console.error('Erro ao cadastrar:', error);
       setStatus('error');
+      setErrorMessage(error.message || 'Erro ao realizar cadastro.');
     } finally {
       setIsLoading(false);
     }
@@ -66,7 +96,7 @@ export default function Cadastro() {
       <div className="max-w-3xl w-full space-y-8 bg-surface-container-lowest p-8 sm:p-10 rounded-xl shadow-sm border border-outline-variant/30">
         <div className="text-center">
           <h1 className="font-headline-lg text-headline-lg text-primary mb-2">Junte-se à AHMP</h1>
-          <p className="font-body-md text-body-md text-on-surface-variant">Cadastre-se para começar sua jornada no Handebol Pro</p>
+          <p className="font-body-md text-body-md text-on-surface-variant">Cadastre-se para começar sua jornada na AHMP</p>
         </div>
         
         {status === 'success' && (
@@ -74,7 +104,7 @@ export default function Cadastro() {
             <CheckCircle2 className="w-6 h-6 text-green-600 flex-shrink-0 mt-0.5" />
             <div>
               <h3 className="font-label-bold">Cadastro realizado com sucesso!</h3>
-              <p className="font-body-sm mt-1">Seus dados foram salvos no nosso banco de dados. Em breve entraremos em contato.</p>
+              <p className="font-body-sm mt-1">Seus dados foram salvos e você será redirecionado para o seu painel.</p>
             </div>
           </div>
         )}
@@ -84,7 +114,7 @@ export default function Cadastro() {
             <AlertCircle className="w-6 h-6 text-red-600 flex-shrink-0 mt-0.5" />
             <div>
               <h3 className="font-label-bold">Erro ao realizar cadastro</h3>
-              <p className="font-body-sm mt-1">Verifique se suas chaves do Supabase foram configuradas nos Secrets (NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_ANON_KEY).</p>
+              <p className="font-body-sm mt-1">{errorMessage}</p>
             </div>
           </div>
         )}
@@ -146,6 +176,25 @@ export default function Cadastro() {
                 <label className="block font-label-bold text-label-bold text-on-surface mb-1" htmlFor="phone">Celular / WhatsApp</label>
                 <input className="block w-full rounded-lg border-outline-variant bg-surface-container-lowest py-3 px-4 text-on-surface focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-body-md border" id="phone" name="phone" placeholder="(00) 00000-0000" type="tel" />
               </div>
+              <div className="sm:col-span-2 relative">
+                <label className="block font-label-bold text-label-bold text-on-surface mb-1" htmlFor="password">Senha de Acesso</label>
+                <input 
+                  required 
+                  minLength={6}
+                  className="block w-full rounded-lg border-outline-variant bg-surface-container-lowest py-3 px-4 pr-12 text-on-surface focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-body-md border" 
+                  id="password" 
+                  name="password" 
+                  placeholder="Mínimo 6 caracteres" 
+                  type={showPassword ? "text" : "password"} 
+                />
+                <button 
+                  type="button" 
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-10 text-on-surface-variant hover:text-primary transition-colors"
+                >
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
             </div>
           </div>
           
@@ -193,12 +242,20 @@ export default function Cadastro() {
           <div className="pt-6 flex flex-col items-center gap-4">
             <button 
               disabled={isLoading}
-              className={`w-full sm:w-auto min-w-[200px] bg-[#FF8C00] text-white font-label-bold text-label-bold py-4 px-8 rounded-lg shadow-sm transition-all border-2 border-transparent ${isLoading ? 'opacity-70 cursor-not-allowed' : 'hover:bg-[#e67e00] hover:shadow-md active:scale-95'}`} 
+              className={`w-full sm:w-auto min-w-[200px] bg-[#FF8C00] text-white font-label-bold text-label-bold py-4 px-8 rounded-lg shadow-sm transition-all border-2 border-transparent flex items-center justify-center gap-2 ${isLoading ? 'opacity-70 cursor-not-allowed' : 'hover:bg-[#e67e00] hover:shadow-md active:scale-95'}`} 
               type="submit"
             >
+              {isLoading && <Loader2 className="w-5 h-5 animate-spin" />}
               {isLoading ? 'Cadastrando...' : 'Finalizar Cadastro'}
             </button>
-            <Link className="font-body-md text-body-md text-primary hover:text-secondary-container transition-colors font-semibold mt-2" href="#">Já tem uma conta? Fazer Login</Link>
+            <div className="mt-4 text-center">
+              <p className="font-body-sm text-on-surface-variant">
+                Já tem uma conta?{' '}
+                <Link href="/login" className="text-primary font-label-bold hover:underline">
+                  Fazer Login
+                </Link>
+              </p>
+            </div>
           </div>
         </form>
       </div>

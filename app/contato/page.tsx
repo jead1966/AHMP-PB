@@ -1,7 +1,25 @@
+'use client';
 import Image from 'next/image';
 import { MapPin, Phone, Mail, Camera, Users, MessageCircle } from 'lucide-react';
+import { useState } from 'react';
 
 export default function Contato() {
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [subject, setSubject] = useState('');
+  const [message, setMessage] = useState('');
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const body = `Nome: ${name}
+E-mail: ${email}
+
+Mensagem:
+${message}`;
+    const mailtoLink = `mailto:ahmp1969@gmail.com?subject=${encodeURIComponent(subject || 'Contato pelo site')}&body=${encodeURIComponent(body)}`;
+    window.location.href = mailtoLink;
+  };
+
   return (
     <main className="flex-grow pt-[56px]">
       {/* Hero Section */}
@@ -21,24 +39,24 @@ export default function Contato() {
           <div className="lg:col-span-7 glass-card rounded-xl p-6 sm:p-6">
             <h2 className="font-headline-md text-headline-md text-primary-container mb-2 uppercase">Envie uma Mensagem</h2>
             <p className="font-body-md text-body-md text-on-surface-variant mb-6">Preencha o formulário abaixo e retornaremos o mais breve possível.</p>
-            <form className="space-y-4">
+            <form className="space-y-4" onSubmit={handleSubmit}>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="flex flex-col">
                   <label className="font-label-bold text-label-bold text-primary-container mb-1 uppercase text-xs" htmlFor="name">Nome</label>
-                  <input className="rounded-DEFAULT border-2 border-surface-variant bg-surface-container-lowest text-on-surface p-3 focus:border-primary-container focus:ring-0 transition-colors font-body-md outline-none" id="name" placeholder="Seu nome completo" type="text" />
+                  <input required value={name} onChange={(e) => setName(e.target.value)} className="rounded-DEFAULT border-2 border-surface-variant bg-surface-container-lowest text-on-surface p-3 focus:border-primary-container focus:ring-0 transition-colors font-body-md outline-none" id="name" placeholder="Seu nome completo" type="text" />
                 </div>
                 <div className="flex flex-col">
                   <label className="font-label-bold text-label-bold text-primary-container mb-1 uppercase text-xs" htmlFor="email">E-mail</label>
-                  <input className="rounded-DEFAULT border-2 border-surface-variant bg-surface-container-lowest text-on-surface p-3 focus:border-primary-container focus:ring-0 transition-colors font-body-md outline-none" id="email" placeholder="seu@email.com" type="email" />
+                  <input required value={email} onChange={(e) => setEmail(e.target.value)} className="rounded-DEFAULT border-2 border-surface-variant bg-surface-container-lowest text-on-surface p-3 focus:border-primary-container focus:ring-0 transition-colors font-body-md outline-none" id="email" placeholder="seu@email.com" type="email" />
                 </div>
               </div>
               <div className="flex flex-col">
                 <label className="font-label-bold text-label-bold text-primary-container mb-1 uppercase text-xs" htmlFor="subject">Assunto</label>
-                <input className="rounded-DEFAULT border-2 border-surface-variant bg-surface-container-lowest text-on-surface p-3 focus:border-primary-container focus:ring-0 transition-colors font-body-md outline-none" id="subject" placeholder="Ex: Informações sobre torneios" type="text" />
+                <input required value={subject} onChange={(e) => setSubject(e.target.value)} className="rounded-DEFAULT border-2 border-surface-variant bg-surface-container-lowest text-on-surface p-3 focus:border-primary-container focus:ring-0 transition-colors font-body-md outline-none" id="subject" placeholder="Ex: Informações sobre torneios" type="text" />
               </div>
               <div className="flex flex-col">
                 <label className="font-label-bold text-label-bold text-primary-container mb-1 uppercase text-xs" htmlFor="message">Mensagem</label>
-                <textarea className="rounded-DEFAULT border-2 border-surface-variant bg-surface-container-lowest text-on-surface p-3 focus:border-primary-container focus:ring-0 transition-colors font-body-md resize-none outline-none" id="message" placeholder="Como podemos ajudar?" rows={5}></textarea>
+                <textarea required value={message} onChange={(e) => setMessage(e.target.value)} className="rounded-DEFAULT border-2 border-surface-variant bg-surface-container-lowest text-on-surface p-3 focus:border-primary-container focus:ring-0 transition-colors font-body-md resize-none outline-none" id="message" placeholder="Como podemos ajudar?" rows={5}></textarea>
               </div>
               <button className="w-full sm:w-auto bg-secondary-container text-on-secondary px-8 py-3 rounded-DEFAULT font-label-bold text-label-bold uppercase tracking-wider hover:bg-secondary transition-colors mt-4 shadow-sm hover:shadow-md" type="submit">Enviar Mensagem</button>
             </form>

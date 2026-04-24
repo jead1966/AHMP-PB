@@ -106,7 +106,7 @@ export default function Institucional() {
             <div className="bg-primary-container border-2 border-on-tertiary-container/30 p-6 rounded-lg group hover:border-secondary-container transition-all">
               <div className="flex justify-between items-start mb-6">
                 <Gavel className="text-secondary-container w-10 h-10" />
-                <span className="text-on-primary-container font-label-bold text-xs uppercase bg-primary px-2 py-1">PDF 2.4MB</span>
+                <span className="text-on-primary-container font-label-bold text-xs uppercase bg-primary px-2 py-1">PDF 5.4MB</span>
               </div>
               <h4 className="font-headline-md text-white mb-2 text-xl">Estatuto Social</h4>
               <p className="font-body-md text-on-primary-container text-sm mb-6">Regimento principal contendo as normas de fundação, direitos e deveres dos associados.</p>
@@ -118,9 +118,9 @@ export default function Institucional() {
             <div className="bg-primary-container border-2 border-on-tertiary-container/30 p-6 rounded-lg group hover:border-secondary-container transition-all">
               <div className="flex justify-between items-start mb-6">
                 <BookOpen className="text-secondary-container w-10 h-10" />
-                <span className="text-on-primary-container font-label-bold text-xs uppercase bg-primary px-2 py-1">PDF 1.8MB</span>
+                <span className="text-on-primary-container font-label-bold text-xs uppercase bg-primary px-2 py-1">PDF 0.7MB</span>
               </div>
-              <h4 className="font-headline-md text-white mb-2 text-xl">Regulamento Geral</h4>
+              <h4 className="font-headline-md text-white mb-2 text-xl">Regimento Interno</h4>
               <p className="font-body-md text-on-primary-container text-sm mb-6">Conjunto de regras técnicas e disciplinares que governam todas as competições oficiais.</p>
               <button className="w-full border-2 border-secondary-container text-secondary-container py-2 rounded font-label-bold hover:bg-secondary-container hover:text-white transition-all flex justify-center items-center gap-2">
                 <Download className="w-5 h-5" /> BAIXAR
@@ -130,9 +130,9 @@ export default function Institucional() {
             <div className="bg-primary-container border-2 border-on-tertiary-container/30 p-6 rounded-lg group hover:border-secondary-container transition-all">
               <div className="flex justify-between items-start mb-6">
                 <Shield className="text-secondary-container w-10 h-10" />
-                <span className="text-on-primary-container font-label-bold text-xs uppercase bg-primary px-2 py-1">PDF 0.9MB</span>
+                <span className="text-on-primary-container font-label-bold text-xs uppercase bg-primary px-2 py-1">PDF 0.6MB</span>
               </div>
-              <h4 className="font-headline-md text-white mb-2 text-xl">Código de Ética</h4>
+              <h4 className="font-headline-md text-white mb-2 text-xl">Certidão Pessoa Jurídica</h4>
               <p className="font-body-md text-on-primary-container text-sm mb-6">Diretrizes de conduta para atletas, técnicos e oficiais, visando o fair-play absoluto.</p>
               <button className="w-full border-2 border-secondary-container text-secondary-container py-2 rounded font-label-bold hover:bg-secondary-container hover:text-white transition-all flex justify-center items-center gap-2">
                 <Download className="w-5 h-5" /> BAIXAR
