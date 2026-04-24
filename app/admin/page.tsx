@@ -29,6 +29,7 @@ export default function AdminDashboard() {
   const { user, profile, loading: authLoading } = useAuth();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<Tab>('dashboard');
+  const [isAdminLocally, setIsAdminLocally] = useState<boolean | null>(null);
   
   const [associados, setAssociados] = useState<any[]>([]);
   const [mensalidades, setMensalidades] = useState<any[]>([]);
@@ -40,16 +41,19 @@ export default function AdminDashboard() {
   const [searchMensalidades, setSearchMensalidades] = useState('');
 
   useEffect(() => {
-    if (!authLoading && !user) {
+    const isLocalAdmin = typeof window !== 'undefined' ? sessionStorage.getItem('isAdmin') === 'true' : false;
+    setIsAdminLocally(isLocalAdmin);
+
+    if (!authLoading && !user && !isLocalAdmin) {
       router.push('/login');
     }
   }, [user, authLoading, router]);
 
   useEffect(() => {
-    if (user) {
+    if (user || isAdminLocally) {
       fetchData();
     }
-  }, [user]);
+  }, [user, isAdminLocally]);
 
   const fetchData = async () => {
     setLoadingData(true);
@@ -89,6 +93,7 @@ export default function AdminDashboard() {
   };
 
   const handleLogout = async () => {
+    sessionStorage.removeItem('isAdmin');
     await supabase.auth.signOut();
     router.push('/');
   };
@@ -216,7 +221,7 @@ export default function AdminDashboard() {
     return hist.slice(0, 50);
   }, [mensalidades, searchMensalidades]);
 
-  if (authLoading || !user) {
+  if (authLoading || (!user && !isAdminLocally)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <Loader2 className="w-10 h-10 animate-spin text-blue-600" />

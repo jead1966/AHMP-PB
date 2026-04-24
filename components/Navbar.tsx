@@ -2,18 +2,40 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { Search, User, Bell, Menu, LayoutDashboard } from 'lucide-react';
-import { usePathname } from 'next/navigation';
+import { Search, User, Bell, Menu, LayoutDashboard, Lock, X } from 'lucide-react';
+import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
+import { useState } from 'react';
 
 export function Navbar() {
   const pathname = usePathname();
+  const router = useRouter();
   const { user, loading } = useAuth();
+  
+  const [showAdminModal, setShowAdminModal] = useState(false);
+  const [adminUser, setAdminUser] = useState('');
+  const [adminPass, setAdminPass] = useState('');
+  const [adminError, setAdminError] = useState('');
 
   const isActive = (path: string) => pathname === path;
 
+  const handleAdminAccess = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (adminUser === 'admin' && adminPass === 'ahmp1969') {
+      setShowAdminModal(false);
+      setAdminUser('');
+      setAdminPass('');
+      setAdminError('');
+      sessionStorage.setItem('isAdmin', 'true');
+      router.push('/admin');
+    } else {
+      setAdminError('Credenciais inválidas!');
+    }
+  };
+
   return (
-    <header className="docked full-width top-0 border-b-2 border-slate-200 dark:border-blue-800 bg-white dark:bg-blue-950 shadow-sm dark:shadow-none z-50 sticky">
+    <>
+      <header className="docked full-width top-0 border-b-2 border-slate-200 dark:border-blue-800 bg-white dark:bg-blue-950 shadow-sm dark:shadow-none z-50 sticky">
       <div className="flex justify-between items-center w-full px-8 py-2 max-w-[1400px] mx-auto">
         <div className="flex items-center gap-6">
           <Link href="/" className="flex items-center">
@@ -93,6 +115,9 @@ export function Navbar() {
             <button className="text-slate-700 hover:text-orange-500 transition-colors p-2 rounded-full hover:bg-slate-100">
               <Search className="w-5 h-5" />
             </button>
+            <button onClick={() => setShowAdminModal(true)} className="text-slate-700 hover:text-orange-500 transition-colors p-2 rounded-full hover:bg-slate-100">
+              <Lock className="w-5 h-5" />
+            </button>
             <button className="text-slate-700 hover:text-orange-500 transition-colors p-2 rounded-full hover:bg-slate-100 relative">
               <Bell className="w-5 h-5" />
               <span className="absolute top-1 right-1 w-2 h-2 bg-orange-500 rounded-full border-2 border-white"></span>
@@ -114,5 +139,76 @@ export function Navbar() {
         </div>
       </div>
     </header>
+
+    {showAdminModal && (
+      <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl shadow-xl w-[95vw] max-w-[500px] overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+          <div className="p-8">
+            <div className="flex items-center justify-between mb-8">
+              <h3 className="font-lexend font-bold text-xl text-slate-800 flex items-center gap-2">
+                <Lock className="w-6 h-6 text-orange-500" />
+                Acesso Restrito
+              </h3>
+              <button 
+                onClick={() => {
+                  setShowAdminModal(false);
+                  setAdminError('');
+                }}
+                className="text-slate-400 hover:text-slate-600 transition-colors p-1 rounded-full hover:bg-slate-100"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleAdminAccess} className="space-y-4">
+              {adminError && (
+                <div className="p-3 bg-red-50 text-red-700 rounded-lg text-sm font-medium border border-red-100">
+                  {adminError}
+                </div>
+              )}
+              
+              <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5" htmlFor="adminUser">
+                  Usuário
+                </label>
+                <input
+                  id="adminUser"
+                  type="text"
+                  value={adminUser}
+                  onChange={(e) => setAdminUser(e.target.value)}
+                  className="w-full rounded-xl border-2 border-slate-300 bg-slate-50 py-3.5 px-4 text-slate-900 focus:bg-white focus:border-orange-500 focus:ring-4 focus:ring-orange-500/20 outline-none transition-all text-base"
+                  placeholder="Seu usuário"
+                  required
+                  autoFocus
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5" htmlFor="adminPass">
+                  Senha
+                </label>
+                <input
+                  id="adminPass"
+                  type="password"
+                  value={adminPass}
+                  onChange={(e) => setAdminPass(e.target.value)}
+                  className="w-full rounded-xl border-2 border-slate-300 bg-slate-50 py-3.5 px-4 text-slate-900 focus:bg-white focus:border-orange-500 focus:ring-4 focus:ring-orange-500/20 outline-none transition-all text-base"
+                  placeholder="••••••••"
+                  required
+                />
+              </div>
+
+              <button
+                type="submit"
+                className="w-full mt-2 py-3 bg-slate-800 text-white hover:bg-slate-900 rounded-xl font-bold uppercase tracking-wider text-sm transition-colors shadow-sm"
+              >
+                Acessar Painel Admin
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    )}
+    </>
   );
 }
