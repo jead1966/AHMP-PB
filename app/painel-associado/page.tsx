@@ -51,8 +51,9 @@ export default function PainelAssociado() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPass, setShowPass] = useState(false);
 
-  const fetchMensalidades = useCallback(async () => {
+  const fetchMensalidades = useCallback(async (silent = false) => {
     if (!user) return;
+    if (!silent) setLoading(true);
     try {
       const { data, error } = await supabase
         .from('mensalidades')
@@ -65,6 +66,8 @@ export default function PainelAssociado() {
       setMensalidades(data || []);
     } catch (err) {
       console.error('Erro ao buscar mensalidades:', err);
+    } finally {
+      if (!silent) setLoading(false);
     }
   }, [user]);
 
@@ -79,7 +82,8 @@ export default function PainelAssociado() {
     try {
       // 1. Upload file to Supabase Storage
       const fileExt = file.name.split('.').pop();
-      const fileName = `${mensalidadeId}-${Date.now()}.${fileExt}`;
+      const randomId = Math.random().toString(36).substring(2, 10);
+      const fileName = `${mensalidadeId}-${randomId}.${fileExt}`;
       const filePath = `${user.id}/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
@@ -121,7 +125,7 @@ export default function PainelAssociado() {
 
   useEffect(() => {
     if (user) {
-      fetchMensalidades();
+      Promise.resolve().then(() => fetchMensalidades(true));
     }
   }, [user, fetchMensalidades]);
 

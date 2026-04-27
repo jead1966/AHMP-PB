@@ -47,6 +47,16 @@ export default function AdminDashboard() {
   const [loadingData, setLoadingData] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   
+  // Payment Launch Form
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [paymentForm, setPaymentForm] = useState({
+    associado_id: '',
+    month: new Date().getMonth() + 1,
+    year: new Date().getFullYear(),
+    amount: 50.00,
+    payment_method: 'Pix'
+  });
+
   // Search states
   const [searchAssociados, setSearchAssociados] = useState('');
   const [searchMensalidades, setSearchMensalidades] = useState('');
@@ -61,8 +71,8 @@ export default function AdminDashboard() {
     perfil: 'USUARIO'
   });
 
-  const fetchData = useCallback(async () => {
-    setLoadingData(true);
+  const fetchData = useCallback(async (silent = false) => {
+    if (!silent) setLoadingData(true);
     try {
       const { data: assocData, error: assocError } = await supabase
         .from('associados')
@@ -116,7 +126,7 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     if (user || isAdminLocally) {
-      void fetchData();
+      Promise.resolve().then(() => fetchData(true));
     }
   }, [user, isAdminLocally, activeTab, fetchData]);
 
@@ -163,6 +173,71 @@ export default function AdminDashboard() {
     } catch (err) {
       console.error(err);
       alert('Erro ao rejeitar mensalidade');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const recordManualPayment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!paymentForm.associado_id) return alert('Selecione um associado');
+    
+    setActionLoading('manual_payment');
+    try {
+      // 1. Check if a record already exists for this period
+      const { data: existing, error: checkError } = await supabase
+        .from('mensalidades')
+        .select('*')
+        .eq('associado_id', paymentForm.associado_id)
+        .eq('month', paymentForm.month)
+        .eq('year', paymentForm.year)
+        .single();
+
+      if (checkError && checkError.code !== 'PGRST116') throw checkError;
+
+      if (existing) {
+        // Update existing record
+        const { error: updateError } = await supabase
+          .from('mensalidades')
+          .update({
+            status: 'paga',
+            payment_date: new Date().toISOString().split('T')[0],
+            amount: paymentForm.amount,
+            receipt_url: null // Clear any pending receipt if manually paid
+          })
+          .eq('id', existing.id);
+        
+        if (updateError) throw updateError;
+      } else {
+        // Create new record as paid
+        const { error: insertError } = await supabase
+          .from('mensalidades')
+          .insert({
+            associado_id: paymentForm.associado_id,
+            month: paymentForm.month,
+            year: paymentForm.year,
+            amount: paymentForm.amount,
+            status: 'paga',
+            payment_date: new Date().toISOString().split('T')[0],
+            due_date: new Date(paymentForm.year, paymentForm.month - 1, 15).toISOString().split('T')[0]
+          });
+        
+        if (insertError) throw insertError;
+      }
+
+      setShowPaymentModal(false);
+      setPaymentForm({
+        associado_id: '',
+        month: new Date().getMonth() + 1,
+        year: new Date().getFullYear(),
+        amount: 50.00,
+        payment_method: 'Pix'
+      });
+      await fetchData();
+      alert('Pagamento registrado com sucesso!');
+    } catch (err) {
+      console.error(err);
+      alert('Erro ao registrar pagamento.');
     } finally {
       setActionLoading(null);
     }
@@ -311,18 +386,37 @@ export default function AdminDashboard() {
     );
   }, [usuarios, searchUsuarios]);
 
-  const emAnalise = useMemo(() => mensalidades.filter(m => m.status === 'em_analise'), [mensalidades]);
-  
   const filteredHistorico = useMemo(() => {
-    let hist = mensalidades.filter(m => m.status !== 'em_analise');
+    let hist = [...mensalidades];
     if (searchMensalidades) {
       hist = hist.filter(m => 
         m.associados?.full_name?.toLowerCase().includes(searchMensalidades.toLowerCase()) ||
         m.associados?.popular_name?.toLowerCase().includes(searchMensalidades.toLowerCase())
       );
     }
-    return hist.slice(0, 50);
+    return hist.slice(0, 100);
   }, [mensalidades, searchMensalidades]);
+
+  // Finance summaries
+  const financeSummary = useMemo(() => {
+    const hoje = new Date();
+    const currMonth = hoje.getMonth() + 1;
+    const currYear = hoje.getFullYear();
+
+    const monthPaid = mensalidades
+      .filter(m => m.status === 'paga' && m.month === currMonth && m.year === currYear)
+      .reduce((acc, m) => acc + (m.amount || 0), 0);
+
+    const monthPending = mensalidades
+      .filter(m => m.status === 'pendente' && m.month === currMonth && m.year === currYear)
+      .reduce((acc, m) => acc + (m.amount || 0), 0);
+
+    const totalPaid = mensalidades
+      .filter(m => m.status === 'paga')
+      .reduce((acc, m) => acc + (m.amount || 0), 0);
+
+    return { monthPaid, monthPending, totalPaid };
+  }, [mensalidades]);
 
   if (authLoading || (!user && !isAdminLocally)) {
     return (
@@ -379,11 +473,6 @@ export default function AdminDashboard() {
                     <item.icon className={`w-5 h-5 ${activeTab === item.id ? 'text-blue-600' : 'text-slate-400'}`} />
                     {item.label}
                   </div>
-                  {item.id === 'mensalidades' && emAnalise.length > 0 && (
-                    <span className="bg-orange-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm">
-                      {emAnalise.length}
-                    </span>
-                  )}
                   {item.id === 'associados' && associadosPendentes > 0 && (
                     <span className="bg-blue-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm">
                       {associadosPendentes}
@@ -448,33 +537,33 @@ export default function AdminDashboard() {
                         </div>
                       </div>
                       
-                      <div className={`bg-white p-6 rounded-xl border border-slate-200 shadow-sm ${emAnalise.length > 0 ? 'ring-2 ring-orange-400/50' : ''}`}>
+                      <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
                         <div className="flex items-center gap-4 mb-4">
-                          <div className="p-3 bg-orange-50 text-orange-500 rounded-lg">
-                            <FileCheck className="w-6 h-6" />
+                          <div className="p-3 bg-emerald-50 text-emerald-600 rounded-lg">
+                            <TrendingUp className="w-6 h-6" />
                           </div>
                           <div>
-                            <p className="text-sm font-medium text-slate-500 uppercase tracking-wide">Para Análise</p>
-                            <h3 className="text-3xl font-bold text-slate-800">{emAnalise.length}</h3>
+                            <p className="text-sm font-medium text-slate-500 uppercase tracking-wide">Arrecadação do Mês</p>
+                            <h3 className="text-3xl font-bold text-emerald-700">R$ {financeSummary.monthPaid.toFixed(2)}</h3>
                           </div>
                         </div>
                         <div className="pt-4 border-t border-slate-100 text-sm mt-2">
-                          <p className="text-slate-500">Comprovantes aguardando aprovação.</p>
+                          <p className="text-slate-500 font-medium">Previsão pendente: <span className="text-orange-600">R$ {financeSummary.monthPending.toFixed(2)}</span></p>
                         </div>
                       </div>
 
                       <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
                         <div className="flex items-center gap-4 mb-4">
-                          <div className="p-3 bg-green-50 text-green-600 rounded-lg">
-                            <TrendingUp className="w-6 h-6" />
+                          <div className="p-3 bg-blue-50 text-blue-600 rounded-lg">
+                            <CreditCard className="w-6 h-6" />
                           </div>
                           <div>
-                            <p className="text-sm font-medium text-slate-500 uppercase tracking-wide">Receita do Mês</p>
-                            <h3 className="text-3xl font-bold text-slate-800">R$ {arrecadacaoMes.toFixed(2)}</h3>
+                            <p className="text-sm font-medium text-slate-500 uppercase tracking-wide">Total Arrecadado</p>
+                            <h3 className="text-3xl font-bold text-slate-800">R$ {financeSummary.totalPaid.toFixed(2)}</h3>
                           </div>
                         </div>
                         <div className="pt-4 border-t border-slate-100 text-sm mt-2">
-                          <p className="text-slate-500">Mensalidades pagas no mês atual.</p>
+                          <p className="text-slate-500 font-medium text-xs">Total histórico de todas as mensalidades pagas.</p>
                         </div>
                       </div>
                     </div>
@@ -577,166 +666,134 @@ export default function AdminDashboard() {
                 {/* --- TAB: MENSALIDADES / FINANCEIRO --- */}
                 {activeTab === 'mensalidades' && (
                   <div className="space-y-6">
+                    {/* Finance Summary Cards */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                      <div className="bg-emerald-600 text-white p-6 rounded-xl shadow-lg shadow-emerald-200/50 relative overflow-hidden">
+                        <div className="relative z-10">
+                          <p className="text-emerald-100 text-sm font-bold uppercase tracking-wider mb-1">Total Arrecadado no Mês</p>
+                          <h3 className="text-4xl font-black font-lexend">R$ {financeSummary.monthPaid.toFixed(2)}</h3>
+                        </div>
+                        <TrendingUp className="absolute right-[-10px] bottom-[-10px] w-32 h-32 text-emerald-500/20" />
+                      </div>
+
+                      <div className="bg-orange-500 text-white p-6 rounded-xl shadow-lg shadow-orange-200/50 relative overflow-hidden">
+                        <div className="relative z-10">
+                          <p className="text-orange-100 text-sm font-bold uppercase tracking-wider mb-1">Previsão Pendente (Mês)</p>
+                          <h3 className="text-4xl font-black font-lexend">R$ {financeSummary.monthPending.toFixed(2)}</h3>
+                        </div>
+                        <Clock className="absolute right-[-10px] bottom-[-10px] w-32 h-32 text-orange-400/20" />
+                      </div>
+
+                      <div className="bg-blue-600 text-white p-6 rounded-xl shadow-lg shadow-blue-200/50 relative overflow-hidden">
+                        <div className="relative z-10">
+                          <p className="text-blue-100 text-sm font-bold uppercase tracking-wider mb-1">Eficiência de Pagamento</p>
+                          <h3 className="text-4xl font-black font-lexend">
+                            {financeSummary.monthPaid + financeSummary.monthPending > 0 
+                              ? Math.round((financeSummary.monthPaid / (financeSummary.monthPaid + financeSummary.monthPending)) * 100)
+                              : 0}%
+                          </h3>
+                        </div>
+                        <LayoutDashboard className="absolute right-[-10px] bottom-[-10px] w-32 h-32 text-blue-500/20" />
+                      </div>
+                    </div>
+
                     {/* Top Actions */}
                     <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
                       <div>
-                        <h2 className="text-xl font-bold font-lexend text-slate-800">Gestão Financeira</h2>
-                        <p className="text-sm text-slate-500">Administre pagamentos e comprovantes.</p>
+                        <h2 className="text-xl font-bold font-lexend text-slate-800">Operações de Caixa</h2>
+                        <p className="text-sm text-slate-500">Lançamento manual e geração de cobrança.</p>
                       </div>
-                      <button
-                        onClick={gerarMensalidadeMesAtual}
-                        disabled={actionLoading === 'gerar_mensalidades'}
-                        className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-lg font-bold text-sm tracking-wide hover:bg-blue-700 transition-colors shadow-sm disabled:opacity-70 focus:ring-4 focus:ring-blue-500/20"
-                      >
-                        {actionLoading === 'gerar_mensalidades' ? (
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                        ) : (
+                      <div className="flex gap-3 w-full sm:w-auto">
+                        <button
+                          onClick={() => setShowPaymentModal(true)}
+                          className="flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-600 text-white rounded-lg font-bold text-sm tracking-wide hover:bg-emerald-700 transition-all shadow-md active:scale-95"
+                        >
                           <PlusCircle className="w-4 h-4" />
-                        )}
-                        Gerar Mensalidades do Mês
-                      </button>
-                    </div>
-
-                    {/* Comprovantes Section */}
-                    <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-                      <div className="p-5 border-b border-slate-200 bg-orange-50/50 flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <FileCheck className="w-5 h-5 text-orange-500" />
-                          <h3 className="text-lg font-bold font-lexend text-slate-800">Comprovantes em Análise</h3>
-                          <span className="bg-orange-500 text-white text-xs font-bold px-2 py-0.5 rounded-full ml-2">{emAnalise.length}</span>
-                        </div>
+                          Lançar Pagamento
+                        </button>
+                        <button
+                          onClick={gerarMensalidadeMesAtual}
+                          disabled={actionLoading === 'gerar_mensalidades'}
+                          className="flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-lg font-bold text-sm tracking-wide hover:bg-blue-700 transition-all shadow-md disabled:opacity-70 active:scale-95"
+                        >
+                          {actionLoading === 'gerar_mensalidades' ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <CreditCard className="w-4 h-4" />
+                          )}
+                          Gerar Mensalidades
+                        </button>
                       </div>
-                      
-                      {emAnalise.length > 0 ? (
-                        <div className="overflow-x-auto">
-                          <table className="w-full text-left border-collapse">
-                            <thead className="bg-slate-50 border-b border-slate-200">
-                              <tr>
-                                <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Associado</th>
-                                <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Referência</th>
-                                <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Valor</th>
-                                <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Ações</th>
-                              </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-100">
-                              {emAnalise.map((m) => (
-                                <tr key={m.id} className="hover:bg-slate-50 transition-colors">
-                                  <td className="px-6 py-4">
-                                    <p className="font-bold text-slate-800 text-sm">{m.associados?.popular_name || m.associados?.full_name}</p>
-                                    <p className="text-xs text-slate-500">{m.associados?.email}</p>
-                                  </td>
-                                  <td className="px-6 py-4">
-                                    <p className="text-sm font-medium text-slate-800">{String(m.month).padStart(2, '0')} / {m.year}</p>
-                                  </td>
-                                  <td className="px-6 py-4">
-                                    <p className="text-sm font-bold text-slate-800">R$ {m.amount.toFixed(2)}</p>
-                                  </td>
-                                  <td className="px-6 py-4 text-right">
-                                    <div className="flex items-center justify-end gap-2">
-                                      {m.receipt_url && (
-                                        <a 
-                                          href={m.receipt_url} 
-                                          target="_blank" 
-                                          rel="noreferrer"
-                                          className="p-2 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors border border-transparent hover:border-blue-100"
-                                          title="Visualizar Comprovante"
-                                        >
-                                          <Search className="w-4 h-4" />
-                                        </a>
-                                      )}
-                                      <button 
-                                        onClick={() => approveMensalidade(m.id)}
-                                        disabled={actionLoading === m.id}
-                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-green-500 text-white hover:bg-green-600 rounded-lg text-xs font-bold transition-colors disabled:opacity-50 shadow-sm"
-                                      >
-                                        {actionLoading === m.id && <Loader2 className="w-3 h-3 animate-spin" />}
-                                        <CheckCircle2 className="w-3.5 h-3.5" /> Aprovar
-                                      </button>
-                                      <button 
-                                        onClick={() => rejectMensalidade(m.id)}
-                                        disabled={actionLoading === m.id}
-                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 text-red-600 hover:bg-red-50 hover:border-red-200 rounded-lg text-xs font-bold transition-colors disabled:opacity-50 shadow-sm text-center"
-                                      >
-                                        <XCircle className="w-3.5 h-3.5" /> Recusar
-                                      </button>
-                                    </div>
-                                  </td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-                      ) : (
-                        <div className="p-10 text-center flex flex-col items-center">
-                          <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4 border border-slate-100">
-                            <CheckCircle2 className="w-8 h-8 text-green-400" />
-                          </div>
-                          <p className="text-slate-600 font-medium">Todos os comprovantes foram analisados.</p>
-                          <p className="text-sm text-slate-400">Bom trabalho!</p>
-                        </div>
-                      )}
                     </div>
 
                     {/* Histórico Section */}
-                    <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col min-h-[400px]">
+                    <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col h-[calc(100vh-280px)] min-h-[400px]">
                       <div className="p-5 border-b border-slate-200 bg-slate-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                         <div className="flex items-center gap-2">
                           <Clock className="w-5 h-5 text-slate-500" />
-                          <h3 className="text-lg font-bold font-lexend text-slate-800">Histórico de Mensalidades</h3>
+                          <h3 className="text-lg font-bold font-lexend text-slate-800">Registros Financeiros</h3>
                         </div>
-                        <div className="relative w-full sm:w-64 text-sm">
+                        <div className="relative w-full sm:w-80 text-sm">
                           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                           <input 
                             type="text" 
                             value={searchMensalidades}
                             onChange={e => setSearchMensalidades(e.target.value)}
-                            placeholder="Buscar associado..." 
-                            className="pl-9 pr-4 py-2 border border-slate-200 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                            placeholder="Buscar por nome do associado..." 
+                            className="pl-9 pr-4 py-2.5 border border-slate-200 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-shadow bg-white"
                           />
                         </div>
                       </div>
                       
-                      <div className="overflow-x-auto">
+                      <div className="flex-1 overflow-auto">
                         <table className="w-full text-left border-collapse">
-                          <thead className="bg-slate-50 border-b border-slate-200">
+                          <thead className="bg-slate-50 border-b border-slate-200 sticky top-0 z-10">
                             <tr>
                               <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Associado</th>
-                              <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Referência</th>
+                              <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Referência</th>
                               <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Valor</th>
                               <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Status</th>
-                              <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Data Pgto</th>
+                              <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Pagamento</th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-slate-100">
                             {filteredHistorico.length === 0 ? (
                               <tr>
-                                <td colSpan={5} className="px-6 py-10 text-center text-slate-500">
-                                  Nenhuma mensalidade encontrada.
+                                <td colSpan={5} className="px-6 py-12 text-center text-slate-500 italic">
+                                  Nenhum registro financeiro encontrado.
                                 </td>
                               </tr>
                             ) : (
                               filteredHistorico.map((m) => (
-                                <tr key={m.id} className="hover:bg-slate-50 transition-colors">
-                                  <td className="px-6 py-3.5">
+                                <tr key={m.id} className="hover:bg-slate-50 group transition-colors">
+                                  <td className="px-6 py-4">
                                     <p className="font-bold text-slate-800 text-sm">{m.associados?.popular_name || m.associados?.full_name}</p>
+                                    <p className="text-xs text-slate-500">{m.associados?.email}</p>
                                   </td>
-                                  <td className="px-6 py-3.5 text-sm text-slate-600">
-                                    {String(m.month).padStart(2, '0')}/{m.year}
-                                  </td>
-                                  <td className="px-6 py-3.5 text-sm font-medium text-slate-700">
-                                    R$ {m.amount.toFixed(2)}
-                                  </td>
-                                  <td className="px-6 py-3.5">
-                                    <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold border ${
-                                      m.status === 'paga' ? 'bg-green-50 text-green-700 border-green-200' : 
-                                      m.status === 'pendente' ? 'bg-orange-50 text-orange-700 border-orange-200' : 
-                                      'bg-red-50 text-red-700 border-red-200'
-                                    }`}>
-                                      {m.status.toUpperCase()}
+                                  <td className="px-6 py-4 text-sm text-slate-600 text-center font-medium">
+                                    <span className="bg-slate-100 px-2 py-1 rounded text-xs">
+                                      {String(m.month).padStart(2, '0')}/{m.year}
                                     </span>
                                   </td>
-                                  <td className="px-6 py-3.5 text-sm text-slate-500 text-right">
-                                    {m.payment_date ? new Date(m.payment_date).toLocaleDateString('pt-BR') : '-'}
+                                  <td className="px-6 py-4 text-sm font-bold text-slate-700">
+                                    R$ {m.amount.toFixed(2)}
+                                  </td>
+                                  <td className="px-6 py-4">
+                                    <span className={`inline-flex items-center px-2 py-1 rounded-md text-[10px] font-black border uppercase tracking-tighter ${
+                                      m.status === 'paga' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 
+                                      m.status === 'pendente' ? 'bg-amber-50 text-amber-700 border-amber-200' : 
+                                      'bg-red-50 text-red-700 border-red-200'
+                                    }`}>
+                                      {m.status === 'paga' ? 'Pago ✓' : m.status}
+                                    </span>
+                                  </td>
+                                  <td className="px-6 py-4 text-sm text-slate-500 text-right font-medium">
+                                    <div className="flex flex-col items-end">
+                                      <span>{m.payment_date ? new Date(m.payment_date).toLocaleDateString('pt-BR') : '-'}</span>
+                                      {m.receipt_url && (
+                                        <a href={m.receipt_url} target="_blank" rel="noreferrer" className="text-[10px] text-blue-500 hover:underline">Ver Comprovante Anexado</a>
+                                      )}
+                                    </div>
                                   </td>
                                 </tr>
                               ))
@@ -844,7 +901,111 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* User Management Modal */}
+      {/* Payment Launch Modal */}
+      {showPaymentModal && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+          <motion.div 
+            initial={{ scale: 0.95, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden"
+          >
+            <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-emerald-600 text-white">
+              <h3 className="text-xl font-bold font-lexend">Lançar Pagamento Manual</h3>
+              <button 
+                onClick={() => setShowPaymentModal(false)}
+                className="p-1 hover:bg-emerald-500 rounded-full transition-colors"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            
+            <form onSubmit={recordManualPayment} className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-1.5">Associado</label>
+                <select 
+                  required
+                  value={paymentForm.associado_id}
+                  onChange={e => setPaymentForm({...paymentForm, associado_id: e.target.value})}
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                >
+                  <option value="">Selecione um associado...</option>
+                  {associados.filter(a => a.status === 'ativo').map(a => (
+                    <option key={a.id} value={a.user_id}>{a.full_name} ({a.popular_name})</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-1.5">Mês</label>
+                  <select 
+                    required
+                    value={paymentForm.month}
+                    onChange={e => setPaymentForm({...paymentForm, month: parseInt(e.target.value)})}
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none"
+                  >
+                    {[...Array(12)].map((_, i) => (
+                      <option key={i+1} value={i+1}>{String(i+1).padStart(2, '0')}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-1.5">Ano</label>
+                  <select 
+                    required
+                    value={paymentForm.year}
+                    onChange={e => setPaymentForm({...paymentForm, year: parseInt(e.target.value)})}
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none"
+                  >
+                    <option value={new Date().getFullYear()}>{new Date().getFullYear()}</option>
+                    <option value={new Date().getFullYear() - 1}>{new Date().getFullYear() - 1}</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-1.5">Valor (R$)</label>
+                  <input 
+                    type="number" 
+                    step="0.01"
+                    min="0"
+                    required
+                    value={paymentForm.amount}
+                    onChange={e => setPaymentForm({...paymentForm, amount: parseFloat(e.target.value)})}
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-1.5">Método</label>
+                  <select 
+                    value={paymentForm.payment_method}
+                    onChange={e => setPaymentForm({...paymentForm, payment_method: e.target.value})}
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none"
+                  >
+                    <option value="Pix">Pix</option>
+                    <option value="Dinheiro">Dinheiro</option>
+                    <option value="Cartão">Cartão</option>
+                    <option value="Transferência">Transferência</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="pt-4">
+                <button
+                  type="submit"
+                  disabled={actionLoading === 'manual_payment'}
+                  className="w-full bg-emerald-600 text-white font-black py-4 rounded-xl shadow-lg hover:bg-emerald-700 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {actionLoading === 'manual_payment' && <Loader2 className="w-5 h-5 animate-spin" />}
+                  Confirmar Pagamento
+                </button>
+              </div>
+            </form>
+          </motion.div>
+        </div>
+      )}
+
       {showUserModal && (
         <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[150] flex items-center justify-center p-4">
           <motion.div 

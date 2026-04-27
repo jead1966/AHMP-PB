@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { User, Camera, Edit2, Activity, UserSquare, CheckCircle2, AlertCircle, Eye, EyeOff, Loader2 } from 'lucide-react';
@@ -14,6 +14,31 @@ export default function Cadastro() {
   const [birthDate, setBirthDate] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
+  const [authChecked, setAuthChecked] = useState(false);
+
+  // Clean stale session if user is logged in but has no profile
+  // or redirect to panel if they are already fully registered
+  useEffect(() => {
+    async function checkExistingSession() {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        const { data } = await supabase
+          .from('associados')
+          .select('id')
+          .eq('user_id', session.user.id)
+          .single();
+        
+        if (data) {
+          router.push('/painel-associado');
+        } else {
+          // If logged in to auth but not in table, sign out to avoid "stale" state errors
+          await supabase.auth.signOut();
+        }
+      }
+      setAuthChecked(true);
+    }
+    checkExistingSession();
+  }, [router]);
 
   const calculateAge = (dob: string) => {
     if (!dob) return null;
@@ -85,7 +110,22 @@ export default function Cadastro() {
     } catch (error: any) {
       console.error('Erro ao cadastrar:', error);
       setStatus('error');
-      setErrorMessage(error.message || 'Erro ao realizar cadastro.');
+      
+      let msg = error.message || 'Erro ao realizar cadastro.';
+      
+      // Handle specific Supabase / Postgres errors for better UX
+      if (msg.includes('already registered')) {
+        msg = 'Opa! Esse e-mail já foi cadastrado anteriormente em nosso sistema. Você não precisa se cadastrar novamente. Por favor, vá para a tela de login e entre com sua senha.';
+        setStatus('error');
+      } else if (msg.includes('duplicate key value')) {
+        if (msg.includes('document_id')) {
+          msg = 'Este CPF já está cadastrado em nosso sistema.';
+        } else {
+          msg = 'Algum dos dados informados já consta em nosso cadastro.';
+        }
+      }
+
+      setErrorMessage(msg);
     } finally {
       setIsLoading(false);
     }
@@ -115,6 +155,14 @@ export default function Cadastro() {
             <div>
               <h3 className="font-label-bold">Erro ao realizar cadastro</h3>
               <p className="font-body-sm mt-1">{errorMessage}</p>
+              {errorMessage.includes('já foi cadastrado') && (
+                <Link 
+                  href="/login"
+                  className="mt-3 inline-flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg text-xs font-bold hover:bg-red-700 transition-colors"
+                >
+                  Ir para Tela de Login
+                </Link>
+              )}
             </div>
           </div>
         )}
