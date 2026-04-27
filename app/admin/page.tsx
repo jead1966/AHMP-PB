@@ -556,11 +556,22 @@ export default function AdminDashboard() {
                     </div>
                     
                     {associados.length === 0 && !loadingData && (
-                      <div className="bg-orange-50 border border-orange-200 p-4 rounded-xl mb-6 flex items-start gap-4">
+                      <div className="bg-orange-50 border border-orange-200 p-4 rounded-xl mb-6 flex items-start gap-4 flex-col sm:flex-row">
                         <AlertCircle className="w-6 h-6 text-orange-600 shrink-0 mt-0.5" />
-                        <div>
-                          <h4 className="font-bold text-orange-800">Nenhum dado encontrado</h4>
-                          <p className="text-sm text-orange-700">A lista de associados está vindo vazia do banco de dados. Isso pode ser erro de permissão RLS ou banco de dados zerado.</p>
+                        <div className="flex-1">
+                          <h4 className="font-bold text-orange-800">Problemas com RLS (Row Level Security)?</h4>
+                          <p className="text-sm text-orange-700 mb-3">
+                            A lista de associados está vazia. Como o painel admin utiliza um login próprio, o Supabase bloqueia as consultas por conta do RLS (Row Level Security).
+                            Para resolver, vá no painel do Supabase, em <strong>SQL Editor</strong>, e execute os comandos abaixo:
+                          </p>
+                          <div className="bg-orange-950/10 p-3 rounded-lg border border-orange-200 font-mono text-xs text-orange-800 overflow-x-auto">
+                            <code>
+                              -- Liberar o acesso de leitura/escrita para todas as tabelas<br />
+                              ALTER TABLE associados DISABLE ROW LEVEL SECURITY;<br />
+                              ALTER TABLE mensalidades DISABLE ROW LEVEL SECURITY;<br />
+                              ALTER TABLE usuarios DISABLE ROW LEVEL SECURITY;
+                            </code>
+                          </div>
                         </div>
                       </div>
                     )}
