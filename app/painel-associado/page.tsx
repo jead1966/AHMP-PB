@@ -46,10 +46,29 @@ export default function PainelAssociado() {
   const [errorMsg, setErrorMsg] = useState('');
   const [uploadingId, setUploadingId] = useState<string | null>(null);
 
+  // Form state for profile
+  const [formProfile, setFormProfile] = useState({
+    popular_name: '',
+    phone: '',
+    position: '',
+    club: ''
+  });
+
   // Password Change state
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPass, setShowPass] = useState(false);
+
+  useEffect(() => {
+    if (profile) {
+      setFormProfile({
+        popular_name: profile.popular_name || '',
+        phone: profile.phone || '',
+        position: profile.position || '',
+        club: profile.club || ''
+      });
+    }
+  }, [profile]);
 
   const fetchMensalidades = useCallback(async (silent = false) => {
     if (!user) return;
@@ -134,19 +153,18 @@ export default function PainelAssociado() {
     router.push('/');
   };
 
-  const handleUpdateData = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleUpdateData = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
     setLoading(true);
     setSuccessMsg('');
     setErrorMsg('');
 
-    const formData = new FormData(e.currentTarget);
     const updates = {
-      popular_name: formData.get('popularName'),
-      phone: formData.get('phone'),
-      position: formData.get('position'),
-      club: formData.get('club'),
+      popular_name: formProfile.popular_name,
+      phone: formProfile.phone,
+      position: formProfile.position,
+      club: formProfile.club,
     };
 
     try {
@@ -415,7 +433,13 @@ export default function PainelAssociado() {
                       <div>
                         <label className="block text-sm font-bold text-on-surface-variant mb-2 uppercase" htmlFor="popularName">Nome Popular</label>
                         <div className="relative">
-                          <input name="popularName" id="popularName" className="w-full rounded-xl border border-outline bg-white py-3 px-4 text-on-surface focus:ring-2 focus:ring-primary/20 transition-all outline-none" defaultValue={profile?.popular_name || ''} />
+                          <input 
+                            name="popularName" 
+                            id="popularName" 
+                            className="w-full rounded-xl border border-outline bg-white py-3 px-4 text-on-surface focus:ring-2 focus:ring-primary/20 transition-all outline-none" 
+                            value={formProfile.popular_name}
+                            onChange={(e) => setFormProfile({...formProfile, popular_name: e.target.value})}
+                          />
                           <Edit2 className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-primary opacity-40" />
                         </div>
                       </div>
@@ -435,11 +459,23 @@ export default function PainelAssociado() {
                       </div>
                       <div>
                         <label className="block text-sm font-bold text-on-surface-variant mb-2 uppercase" htmlFor="phone">Telefone / WhatsApp</label>
-                        <input name="phone" id="phone" className="w-full rounded-xl border border-outline bg-white py-3 px-4 text-on-surface focus:ring-2 focus:ring-primary/20 transition-all outline-none" defaultValue={profile?.phone || ''} />
+                        <input 
+                          name="phone" 
+                          id="phone" 
+                          className="w-full rounded-xl border border-outline bg-white py-3 px-4 text-on-surface focus:ring-2 focus:ring-primary/20 transition-all outline-none" 
+                          value={formProfile.phone}
+                          onChange={(e) => setFormProfile({...formProfile, phone: e.target.value})}
+                        />
                       </div>
                       <div>
                         <label className="block text-sm font-bold text-on-surface-variant mb-2 uppercase" htmlFor="position">Posição / Função</label>
-                        <input name="position" id="position" className="w-full rounded-xl border border-outline bg-white py-3 px-4 text-on-surface focus:ring-2 focus:ring-primary/20 transition-all outline-none" defaultValue={profile?.position || ''} />
+                        <input 
+                          name="position" 
+                          id="position" 
+                          className="w-full rounded-xl border border-outline bg-white py-3 px-4 text-on-surface focus:ring-2 focus:ring-primary/20 transition-all outline-none"
+                          value={formProfile.position}
+                          onChange={(e) => setFormProfile({...formProfile, position: e.target.value})}
+                        />
                       </div>
                     </div>
                     <div className="pt-6 border-t border-outline-variant flex justify-end">
@@ -560,8 +596,8 @@ export default function PainelAssociado() {
               )}
 
               {activeTab === 'seguranca' && (
-                <div className="bg-white p-8 rounded-2xl border border-outline-variant shadow-sm">
-                  <h2 className="text-2xl font-bold text-on-surface mb-8 border-b pb-4 border-outline-variant uppercase">Alterar Senha do Painel</h2>
+                <div className="bg-white p-8 rounded-2xl border border-outline-variant shadow-sm min-h-[500px]">
+                  <h2 className="text-2xl font-bold text-on-surface mb-8 border-b pb-4 border-outline-variant uppercase font-lexend">Alterar Senha de Acesso</h2>
                   
                   {successMsg && (
                     <div className="mb-6 p-4 bg-green-50 text-green-800 rounded-xl flex items-center gap-3 text-sm border border-green-200">
@@ -576,51 +612,61 @@ export default function PainelAssociado() {
                     </div>
                   )}
 
-                  <div className="bg-orange-50 p-4 rounded-xl mb-8 border border-orange-200 flex items-start gap-3">
-                    <AlertCircle className="w-5 h-5 text-orange-600 mt-0.5 flex-shrink-0" />
-                    <p className="text-sm text-orange-800 font-medium">Garanta que sua nova senha tenha ao menos 6 caracteres para sua segurança.</p>
+                  <div className="bg-blue-50 p-6 rounded-xl mb-8 border border-blue-100 flex items-start gap-4">
+                    <div className="p-2 bg-blue-100 rounded-lg text-blue-600">
+                      <Lock className="w-5 h-5" />
+                    </div>
+                    <p className="text-sm text-blue-800 font-medium leading-relaxed">
+                      Para sua segurança, escolha uma senha forte com pelo menos 6 caracteres, incluindo letras e números se possível.
+                    </p>
                   </div>
 
-                  <form onSubmit={handleChangePassword} className="max-w-md space-y-6">
-                    <div className="relative">
-                      <label className="block text-sm font-bold text-on-surface-variant mb-2 uppercase">Nova Senha</label>
-                      <input 
-                        type={showPass ? "text" : "password"} 
-                        required
-                        minLength={6}
-                        className="w-full rounded-xl border border-outline bg-white py-3 px-4 text-on-surface focus:ring-2 focus:ring-primary/20 transition-all outline-none" 
-                        value={newPassword}
-                        onChange={(e) => setNewPassword(e.target.value)}
-                        placeholder="••••••••"
-                      />
+                  <form onSubmit={handleChangePassword} className="max-w-2xl space-y-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <label className="block text-xs font-black text-on-surface-variant mb-2 uppercase tracking-widest font-lexend">Nova Senha</label>
+                        <div className="relative">
+                          <input 
+                            type={showPass ? "text" : "password"} 
+                            required
+                            minLength={6}
+                            className="w-full rounded-xl border border-outline bg-white py-4 px-4 text-on-surface focus:ring-2 focus:ring-primary/20 transition-all outline-none pr-12 font-medium" 
+                            value={newPassword}
+                            onChange={(e) => setNewPassword(e.target.value)}
+                            placeholder="Nova senha"
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-black text-on-surface-variant mb-2 uppercase tracking-widest font-lexend">Confirmar Senha</label>
+                        <div className="relative">
+                          <input 
+                            type={showPass ? "text" : "password"} 
+                            required
+                            minLength={6}
+                            className="w-full rounded-xl border border-outline bg-white py-4 px-4 text-on-surface focus:ring-2 focus:ring-primary/20 transition-all outline-none pr-12 font-medium" 
+                            value={confirmPassword}
+                            onChange={(e) => setConfirmPassword(e.target.value)}
+                            placeholder="Repita a nova senha"
+                          />
+                          <button 
+                            type="button" 
+                            onClick={() => setShowPass(!showPass)}
+                            className="absolute right-4 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-primary transition-colors p-2 rounded-full hover:bg-surface-container"
+                          >
+                            {showPass ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                          </button>
+                        </div>
+                      </div>
                     </div>
-                    <div className="relative">
-                      <label className="block text-sm font-bold text-on-surface-variant mb-2 uppercase">Confirmar Nova Senha</label>
-                      <input 
-                        type={showPass ? "text" : "password"} 
-                        required
-                        minLength={6}
-                        className="w-full rounded-xl border border-outline bg-white py-3 px-4 text-on-surface focus:ring-2 focus:ring-primary/20 transition-all outline-none" 
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
-                        placeholder="••••••••"
-                      />
-                      <button 
-                        type="button" 
-                        onClick={() => setShowPass(!showPass)}
-                        className="absolute right-4 top-10 text-on-surface-variant hover:text-primary transition-colors"
-                      >
-                        {showPass ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                      </button>
-                    </div>
-                    <div className="pt-4">
+                    <div className="pt-4 flex justify-start">
                       <button
                         type="submit"
                         disabled={loading || !newPassword || !confirmPassword}
-                        className="w-full bg-primary text-white py-4 rounded-xl font-bold uppercase text-sm hover:shadow-lg transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                        className="w-full sm:w-auto min-w-[240px] bg-primary text-white py-4 px-8 rounded-xl font-black uppercase text-sm hover:shadow-xl hover:scale-[1.02] transition-all flex items-center justify-center gap-3 disabled:opacity-50 active:scale-95"
                       >
                         {loading && <Loader2 className="w-4 h-4 animate-spin" />}
-                        Atualizar Senha
+                        Atualizar Minha Senha
                       </button>
                     </div>
                   </form>
