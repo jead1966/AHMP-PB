@@ -63,6 +63,22 @@ export default function AdminDashboard() {
   const [searchMensalidades, setSearchMensalidades] = useState('');
   const [searchUsuarios, setSearchUsuarios] = useState('');
 
+  // Associado Form states
+  const [showAssociadoModal, setShowAssociadoModal] = useState(false);
+  const [editingAssociado, setEditingAssociado] = useState<any>(null);
+  const [associadoForm, setAssociadoForm] = useState({
+    full_name: '',
+    popular_name: '',
+    email: '',
+    phone: '',
+    document_id: '',
+    identity_document: '',
+    birthday: '',
+    category: '',
+    position: '',
+    club: ''
+  });
+
   // User Form states
   const [showUserModal, setShowUserModal] = useState(false);
   const [editingUser, setEditingUser] = useState<any>(null);
@@ -385,6 +401,60 @@ export default function AdminDashboard() {
     }
   };
 
+  const saveAssociado = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setActionLoading('save_associado');
+    try {
+      if (editingAssociado) {
+        const { error } = await supabase
+          .from('associados')
+          .update({
+            full_name: associadoForm.full_name,
+            popular_name: associadoForm.popular_name,
+            email: associadoForm.email,
+            phone: associadoForm.phone,
+            document_id: associadoForm.document_id,
+            identity_document: associadoForm.identity_document,
+            birthday: associadoForm.birthday,
+            category: associadoForm.category,
+            position: associadoForm.position,
+            club: associadoForm.club,
+          })
+          .eq('id', editingAssociado.id);
+        if (error) throw error;
+      }
+      
+      setShowAssociadoModal(false);
+      setEditingAssociado(null);
+      await fetchData();
+      alert('Associado atualizado com sucesso!');
+    } catch (err) {
+      console.error(err);
+      alert('Erro ao atualizar associado.');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const openAssociadoModal = (associadoToEdit = null) => {
+    if (associadoToEdit) {
+      setEditingAssociado(associadoToEdit);
+      setAssociadoForm({
+        full_name: (associadoToEdit as any).full_name || '',
+        popular_name: (associadoToEdit as any).popular_name || '',
+        email: (associadoToEdit as any).email || '',
+        phone: (associadoToEdit as any).phone || '',
+        document_id: (associadoToEdit as any).document_id || '',
+        identity_document: (associadoToEdit as any).identity_document || '',
+        birthday: (associadoToEdit as any).birthday || '',
+        category: (associadoToEdit as any).category || '',
+        position: (associadoToEdit as any).position || '',
+        club: (associadoToEdit as any).club || ''
+      });
+      setShowAssociadoModal(true);
+    }
+  };
+
   const openUserModal = (userToEdit = null) => {
     if (userToEdit) {
       setEditingUser(userToEdit);
@@ -695,24 +765,33 @@ export default function AdminDashboard() {
                                   </span>
                                 </td>
                                 <td className="px-6 py-4 text-right">
-                                  {a.status !== 'ativo' && (
-                                    <button 
-                                      onClick={() => updateAssociadoStatus(a.user_id, 'ativo')}
-                                      disabled={actionLoading === a.user_id}
-                                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-lg text-xs font-bold transition-colors border border-blue-100 disabled:opacity-50"
+                                  <div className="flex items-center justify-end gap-2 text-right">
+                                    <button
+                                      onClick={() => openAssociadoModal(a)}
+                                      className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors border border-transparent hover:border-blue-100"
+                                      title="Editar Associado"
                                     >
-                                      <Check className="w-3.5 h-3.5" /> Aprovar
+                                      <Edit2 className="w-4 h-4" />
                                     </button>
-                                  )}
-                                  {a.status === 'ativo' && (
-                                    <button 
-                                      onClick={() => updateAssociadoStatus(a.user_id, 'inativo')}
-                                      disabled={actionLoading === a.user_id}
-                                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white text-slate-600 hover:bg-red-50 hover:text-red-700 rounded-lg text-xs font-bold transition-colors border border-slate-200 hover:border-red-200 disabled:opacity-50 opacity-0 group-hover:opacity-100"
-                                    >
-                                      <X className="w-3.5 h-3.5" /> Inativar
-                                    </button>
-                                  )}
+                                    {a.status !== 'ativo' && (
+                                      <button 
+                                        onClick={() => updateAssociadoStatus(a.user_id, 'ativo')}
+                                        disabled={actionLoading === a.user_id}
+                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-lg text-xs font-bold transition-colors border border-blue-100 disabled:opacity-50"
+                                      >
+                                        <Check className="w-3.5 h-3.5" /> Aprovar
+                                      </button>
+                                    )}
+                                    {a.status === 'ativo' && (
+                                      <button 
+                                        onClick={() => updateAssociadoStatus(a.user_id, 'inativo')}
+                                        disabled={actionLoading === a.user_id}
+                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white text-slate-600 hover:bg-red-50 hover:text-red-700 rounded-lg text-xs font-bold transition-colors border border-slate-200 hover:border-red-200 disabled:opacity-50 opacity-0 group-hover:opacity-100"
+                                      >
+                                        <X className="w-3.5 h-3.5" /> Inativar
+                                      </button>
+                                    )}
+                                  </div>
                                 </td>
                               </tr>
                             ))
@@ -1081,6 +1160,175 @@ export default function AdminDashboard() {
                   </button>
                 </div>
               </form>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {showAssociadoModal && (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[150] flex items-center justify-center p-4">
+          <motion.div 
+            initial={{ scale: 0.95, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="bg-white rounded-2xl shadow-xl w-full max-w-[800px] overflow-hidden max-h-[90vh] flex flex-col"
+          >
+            <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+              <h3 className="font-lexend font-bold text-xl text-slate-800 flex items-center gap-2">
+                <Users className="w-6 h-6 text-blue-600" />
+                Editar Dados do Associado
+              </h3>
+              <button 
+                onClick={() => setShowAssociadoModal(false)}
+                className="text-slate-400 hover:text-slate-600 transition-colors p-2 rounded-full hover:bg-slate-200"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="p-6 overflow-y-auto w-full">
+              <form id="edit-associado-form" onSubmit={saveAssociado} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2" htmlFor="full_name">Nome Completo</label>
+                    <input 
+                      name="full_name" 
+                      id="full_name" 
+                      className="w-full rounded-xl border border-slate-300 bg-white py-3 px-4 text-slate-900 focus:ring-2 focus:ring-blue-500/20 transition-all outline-none" 
+                      value={associadoForm.full_name}
+                      onChange={(e) => setAssociadoForm({...associadoForm, full_name: e.target.value})}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2" htmlFor="popular_name">Nome Popular (Apelido)</label>
+                    <input 
+                      name="popular_name" 
+                      id="popular_name" 
+                      className="w-full rounded-xl border border-slate-300 bg-white py-3 px-4 text-slate-900 focus:ring-2 focus:ring-blue-500/20 transition-all outline-none" 
+                      value={associadoForm.popular_name}
+                      onChange={(e) => setAssociadoForm({...associadoForm, popular_name: e.target.value})}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2" htmlFor="email">E-mail</label>
+                    <input 
+                      name="email" 
+                      id="email" 
+                      type="email"
+                      className="w-full rounded-xl border border-slate-300 bg-white py-3 px-4 text-slate-900 focus:ring-2 focus:ring-blue-500/20 transition-all outline-none" 
+                      value={associadoForm.email}
+                      onChange={(e) => setAssociadoForm({...associadoForm, email: e.target.value})}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2" htmlFor="document_id">CPF</label>
+                    <input 
+                      name="document_id" 
+                      id="document_id" 
+                      className="w-full rounded-xl border border-slate-300 bg-white py-3 px-4 text-slate-900 focus:ring-2 focus:ring-blue-500/20 transition-all outline-none" 
+                      value={associadoForm.document_id}
+                      onChange={(e) => setAssociadoForm({...associadoForm, document_id: e.target.value})}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2" htmlFor="identity_document">No. Identidade (RG)</label>
+                    <input 
+                      name="identity_document" 
+                      id="identity_document" 
+                      className="w-full rounded-xl border border-slate-300 bg-white py-3 px-4 text-slate-900 focus:ring-2 focus:ring-blue-500/20 transition-all outline-none" 
+                      value={associadoForm.identity_document}
+                      onChange={(e) => setAssociadoForm({...associadoForm, identity_document: e.target.value})}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2" htmlFor="birthday">Data de Nascimento</label>
+                    <input 
+                      type="date"
+                      name="birthday" 
+                      id="birthday" 
+                      className="w-full rounded-xl border border-slate-300 bg-white py-3 px-4 text-slate-900 focus:ring-2 focus:ring-blue-500/20 transition-all outline-none" 
+                      value={associadoForm.birthday}
+                      onChange={(e) => setAssociadoForm({...associadoForm, birthday: e.target.value})}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2" htmlFor="category">Categoria</label>
+                    <select 
+                      name="category" 
+                      id="category" 
+                      className="w-full rounded-xl border border-slate-300 bg-white py-3 px-4 text-slate-900 focus:ring-2 focus:ring-blue-500/20 transition-all outline-none"
+                      value={associadoForm.category}
+                      onChange={(e) => setAssociadoForm({...associadoForm, category: e.target.value})}
+                    >
+                      <option value="">Selecionar Categoria</option>
+                      <option value="adu">Adu</option>
+                      <option value="35+">35+</option>
+                      <option value="42+">42+</option>
+                      <option value="49+">49+</option>
+                      <option value="55+">55+</option>
+                      <option value="60+">60+</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2" htmlFor="position">Posição / Função</label>
+                    <select 
+                      name="position" 
+                      id="position" 
+                      className="w-full rounded-xl border border-slate-300 bg-white py-3 px-4 text-slate-900 focus:ring-2 focus:ring-blue-500/20 transition-all outline-none"
+                      value={associadoForm.position}
+                      onChange={(e) => setAssociadoForm({...associadoForm, position: e.target.value})}
+                    >
+                      <option value="">Selecionar Posição</option>
+                      <option value="Goleiro">Goleiro</option>
+                      <option value="Ponta Esquerda">Ponta Esquerda</option>
+                      <option value="Armador Esquerdo">Armador Esquerdo</option>
+                      <option value="Central">Central</option>
+                      <option value="Pivô">Pivô</option>
+                      <option value="Armador Direito">Armador Direito</option>
+                      <option value="Ponta Direita">Ponta Direita</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2" htmlFor="phone">Telefone / WhatsApp</label>
+                    <input 
+                      name="phone" 
+                      id="phone" 
+                      className="w-full rounded-xl border border-slate-300 bg-white py-3 px-4 text-slate-900 focus:ring-2 focus:ring-blue-500/20 transition-all outline-none" 
+                      value={associadoForm.phone}
+                      onChange={(e) => setAssociadoForm({...associadoForm, phone: e.target.value})}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2" htmlFor="club">Clube / Equipe Atual</label>
+                    <input 
+                      name="club" 
+                      id="club" 
+                      className="w-full rounded-xl border border-slate-300 bg-white py-3 px-4 text-slate-900 focus:ring-2 focus:ring-blue-500/20 transition-all outline-none" 
+                      value={associadoForm.club}
+                      onChange={(e) => setAssociadoForm({...associadoForm, club: e.target.value})}
+                      placeholder="Nome da equipe"
+                    />
+                  </div>
+                </div>
+              </form>
+            </div>
+            
+            <div className="p-6 border-t border-slate-100 bg-slate-50 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setShowAssociadoModal(false)}
+                className="px-6 py-2.5 text-slate-600 font-bold text-sm tracking-wide hover:bg-slate-200 transition-colors rounded-xl"
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                form="edit-associado-form"
+                disabled={actionLoading === 'save_associado'}
+                className="px-8 py-2.5 bg-blue-600 text-white font-bold text-sm tracking-wide rounded-xl hover:bg-blue-700 shadow-md transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {actionLoading === 'save_associado' ? <Loader2 className="w-5 h-5 animate-spin" /> : <CheckCircle2 className="w-5 h-5" />}
+                Salvar Alterações
+              </button>
             </div>
           </motion.div>
         </div>

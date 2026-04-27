@@ -270,13 +270,13 @@ export default function Cadastro() {
                 <label className="block font-label-bold text-label-bold text-on-surface mb-1" htmlFor="position">Posição</label>
                 <select className="block w-full rounded-lg border-outline-variant bg-surface-container-lowest py-3 px-4 text-on-surface focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-body-md border" id="position" name="position" defaultValue="">
                   <option disabled value="">Selecionar Posição</option>
-                  <option value="goalkeeper">Goleiro</option>
-                  <option value="left_wing">Ponta Esquerda</option>
-                  <option value="left_back">Armador Esquerdo</option>
-                  <option value="center_back">Central</option>
-                  <option value="pivot">Pivô</option>
-                  <option value="right_back">Armador Direito</option>
-                  <option value="right_wing">Ponta Direita</option>
+                  <option value="Goleiro">Goleiro</option>
+                  <option value="Ponta Esquerda">Ponta Esquerda</option>
+                  <option value="Armador Esquerdo">Armador Esquerdo</option>
+                  <option value="Central">Central</option>
+                  <option value="Pivô">Pivô</option>
+                  <option value="Armador Direito">Armador Direito</option>
+                  <option value="Ponta Direita">Ponta Direita</option>
                 </select>
               </div>
               <div className="sm:col-span-2">

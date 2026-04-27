@@ -49,10 +49,15 @@ export default function PainelAssociado() {
 
   // Form state for profile
   const [formProfile, setFormProfile] = useState({
+    full_name: '',
     popular_name: '',
     phone: '',
     position: '',
-    club: ''
+    club: '',
+    document_id: '',
+    identity_document: '',
+    birthday: '',
+    category: ''
   });
 
   // Password Change state
@@ -63,10 +68,15 @@ export default function PainelAssociado() {
   useEffect(() => {
     if (profile) {
       setFormProfile({
+        full_name: profile.full_name || '',
         popular_name: profile.popular_name || '',
         phone: profile.phone || '',
         position: profile.position || '',
-        club: profile.club || ''
+        club: profile.club || '',
+        document_id: profile.document_id || '',
+        identity_document: profile.identity_document || '',
+        birthday: profile.birthday || '',
+        category: profile.category || ''
       });
     }
   }, [profile]);
@@ -162,10 +172,15 @@ export default function PainelAssociado() {
     setErrorMsg('');
 
     const updates = {
+      full_name: formProfile.full_name,
       popular_name: formProfile.popular_name,
       phone: formProfile.phone,
       position: formProfile.position,
       club: formProfile.club,
+      document_id: formProfile.document_id,
+      identity_document: formProfile.identity_document,
+      birthday: formProfile.birthday,
+      category: formProfile.category,
     };
 
     try {
@@ -423,12 +438,18 @@ export default function PainelAssociado() {
                   )}
 
                   <form onSubmit={handleUpdateData} className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="group">
-                        <label className="block text-sm font-bold text-on-surface-variant mb-2 uppercase">Nome Completo</label>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-4">
+                      <div>
+                        <label className="block text-sm font-bold text-on-surface-variant mb-2 uppercase" htmlFor="full_name">Nome Completo</label>
                         <div className="relative">
-                          <input className="w-full rounded-xl border border-outline bg-gray-50 py-3 px-4 text-on-surface-variant cursor-not-allowed outline-none" value={profile?.full_name || ''} readOnly />
-                          <Lock className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant opacity-40" />
+                          <input 
+                            name="full_name" 
+                            id="full_name" 
+                            className="w-full rounded-xl border border-outline bg-white py-3 px-4 text-on-surface focus:ring-2 focus:ring-primary/20 transition-all outline-none" 
+                            value={formProfile.full_name}
+                            onChange={(e) => setFormProfile({...formProfile, full_name: e.target.value})}
+                          />
+                          <Edit2 className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-primary opacity-40" />
                         </div>
                       </div>
                       <div>
@@ -451,32 +472,106 @@ export default function PainelAssociado() {
                           <Lock className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant opacity-40" />
                         </div>
                       </div>
-                      <div className="group">
-                        <label className="block text-sm font-bold text-on-surface-variant mb-2 uppercase">CPF</label>
+                      <div>
+                        <label className="block text-sm font-bold text-on-surface-variant mb-2 uppercase" htmlFor="document_id">CPF</label>
                         <div className="relative">
-                          <input className="w-full rounded-xl border border-outline bg-gray-50 py-3 px-4 text-on-surface-variant cursor-not-allowed outline-none" value={profile?.document_id || ''} readOnly />
-                          <Lock className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant opacity-40" />
+                          <input 
+                            name="document_id" 
+                            id="document_id" 
+                            className="w-full rounded-xl border border-outline bg-white py-3 px-4 text-on-surface focus:ring-2 focus:ring-primary/20 transition-all outline-none" 
+                            value={formProfile.document_id}
+                            onChange={(e) => setFormProfile({...formProfile, document_id: e.target.value})}
+                          />
+                          <Edit2 className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-primary opacity-40" />
                         </div>
                       </div>
                       <div>
-                        <label className="block text-sm font-bold text-on-surface-variant mb-2 uppercase" htmlFor="phone">Telefone / WhatsApp</label>
+                        <label className="block text-sm font-bold text-on-surface-variant mb-2 uppercase" htmlFor="identity_document">No. Identidade (RG)</label>
+                        <div className="relative">
+                          <input 
+                            name="identity_document" 
+                            id="identity_document" 
+                            className="w-full rounded-xl border border-outline bg-white py-3 px-4 text-on-surface focus:ring-2 focus:ring-primary/20 transition-all outline-none" 
+                            value={formProfile.identity_document}
+                            onChange={(e) => setFormProfile({...formProfile, identity_document: e.target.value})}
+                          />
+                          <Edit2 className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-primary opacity-40" />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-bold text-on-surface-variant mb-2 uppercase" htmlFor="birthday">Data de Nascimento</label>
                         <input 
-                          name="phone" 
-                          id="phone" 
+                          type="date"
+                          name="birthday" 
+                          id="birthday" 
                           className="w-full rounded-xl border border-outline bg-white py-3 px-4 text-on-surface focus:ring-2 focus:ring-primary/20 transition-all outline-none" 
-                          value={formProfile.phone}
-                          onChange={(e) => setFormProfile({...formProfile, phone: e.target.value})}
+                          value={formProfile.birthday}
+                          onChange={(e) => setFormProfile({...formProfile, birthday: e.target.value})}
                         />
                       </div>
                       <div>
+                        <label className="block text-sm font-bold text-on-surface-variant mb-2 uppercase" htmlFor="category">Categoria</label>
+                        <select 
+                          name="category" 
+                          id="category" 
+                          className="w-full rounded-xl border border-outline bg-white py-3 px-4 text-on-surface focus:ring-2 focus:ring-primary/20 transition-all outline-none"
+                          value={formProfile.category}
+                          onChange={(e) => setFormProfile({...formProfile, category: e.target.value})}
+                        >
+                          <option value="">Selecionar Categoria</option>
+                          <option value="adu">Adu</option>
+                          <option value="35+">35+</option>
+                          <option value="42+">42+</option>
+                          <option value="49+">49+</option>
+                          <option value="55+">55+</option>
+                          <option value="60+">60+</option>
+                        </select>
+                      </div>
+                      <div>
                         <label className="block text-sm font-bold text-on-surface-variant mb-2 uppercase" htmlFor="position">Posição / Função</label>
-                        <input 
+                        <select 
                           name="position" 
                           id="position" 
                           className="w-full rounded-xl border border-outline bg-white py-3 px-4 text-on-surface focus:ring-2 focus:ring-primary/20 transition-all outline-none"
                           value={formProfile.position}
                           onChange={(e) => setFormProfile({...formProfile, position: e.target.value})}
-                        />
+                        >
+                          <option value="">Selecionar Posição</option>
+                          <option value="Goleiro">Goleiro</option>
+                          <option value="Ponta Esquerda">Ponta Esquerda</option>
+                          <option value="Armador Esquerdo">Armador Esquerdo</option>
+                          <option value="Central">Central</option>
+                          <option value="Pivô">Pivô</option>
+                          <option value="Armador Direito">Armador Direito</option>
+                          <option value="Ponta Direita">Ponta Direita</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-bold text-on-surface-variant mb-2 uppercase" htmlFor="phone">Telefone / WhatsApp</label>
+                        <div className="relative">
+                          <input 
+                            name="phone" 
+                            id="phone" 
+                            className="w-full rounded-xl border border-outline bg-white py-3 px-4 text-on-surface focus:ring-2 focus:ring-primary/20 transition-all outline-none" 
+                            value={formProfile.phone}
+                            onChange={(e) => setFormProfile({...formProfile, phone: e.target.value})}
+                          />
+                          <Edit2 className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-primary opacity-40" />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-bold text-on-surface-variant mb-2 uppercase" htmlFor="club">Clube / Equipe Atual</label>
+                        <div className="relative">
+                          <input 
+                            name="club" 
+                            id="club" 
+                            className="w-full rounded-xl border border-outline bg-white py-3 px-4 text-on-surface focus:ring-2 focus:ring-primary/20 transition-all outline-none" 
+                            value={formProfile.club}
+                            onChange={(e) => setFormProfile({...formProfile, club: e.target.value})}
+                            placeholder="Nome da equipe"
+                          />
+                          <Edit2 className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-primary opacity-40" />
+                        </div>
                       </div>
                     </div>
                     <div className="pt-6 border-t border-outline-variant flex justify-end">
