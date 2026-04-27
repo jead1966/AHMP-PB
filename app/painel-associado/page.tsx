@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
@@ -51,7 +51,7 @@ export default function PainelAssociado() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPass, setShowPass] = useState(false);
 
-  const fetchMensalidades = async () => {
+  const fetchMensalidades = useCallback(async () => {
     if (!user) return;
     try {
       const { data, error } = await supabase
@@ -66,7 +66,7 @@ export default function PainelAssociado() {
     } catch (err) {
       console.error('Erro ao buscar mensalidades:', err);
     }
-  };
+  }, [user]);
 
   const handleUploadReceipt = async (mensalidadeId: string, event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -79,7 +79,7 @@ export default function PainelAssociado() {
     try {
       // 1. Upload file to Supabase Storage
       const fileExt = file.name.split('.').pop();
-      const fileName = `${mensalidadeId}-${Math.random()}.${fileExt}`;
+      const fileName = `${mensalidadeId}-${Date.now()}.${fileExt}`;
       const filePath = `${user.id}/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
@@ -123,7 +123,7 @@ export default function PainelAssociado() {
     if (user) {
       fetchMensalidades();
     }
-  }, [user]);
+  }, [user, fetchMensalidades]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();

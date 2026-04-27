@@ -19,41 +19,47 @@ import {
   PlusCircle,
   Clock,
   Check,
-  X
+  X,
+  UserPlus,
+  Shield,
+  Trash2,
+  Edit2,
+  Key
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-type Tab = 'dashboard' | 'associados' | 'mensalidades';
+type Tab = 'dashboard' | 'associados' | 'mensalidades' | 'usuarios';
 
 export default function AdminDashboard() {
   const { user, profile, loading: authLoading } = useAuth();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<Tab>('dashboard');
-  const [isAdminLocally, setIsAdminLocally] = useState<boolean | null>(null);
+  const [isAdminLocally, setIsAdminLocally] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      return sessionStorage.getItem('isAdmin') === 'true';
+    }
+    return false;
+  });
   
   const [associados, setAssociados] = useState<any[]>([]);
   const [mensalidades, setMensalidades] = useState<any[]>([]);
+  const [usuarios, setUsuarios] = useState<any[]>([]);
   const [loadingData, setLoadingData] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   
   // Search states
   const [searchAssociados, setSearchAssociados] = useState('');
   const [searchMensalidades, setSearchMensalidades] = useState('');
+  const [searchUsuarios, setSearchUsuarios] = useState('');
 
-  useEffect(() => {
-    const isLocalAdmin = typeof window !== 'undefined' ? sessionStorage.getItem('isAdmin') === 'true' : false;
-    setIsAdminLocally(isLocalAdmin);
-
-    if (!authLoading && !user && !isLocalAdmin) {
-      router.push('/login');
-    }
-  }, [user, authLoading, router]);
-
-  useEffect(() => {
-    if (user || isAdminLocally) {
-      fetchData();
-    }
-  }, [user, isAdminLocally]);
+  // User Form states
+  const [showUserModal, setShowUserModal] = useState(false);
+  const [editingUser, setEditingUser] = useState<any>(null);
+  const [userForm, setUserForm] = useState({
+    username: '',
+    password: '',
+    perfil: 'USUARIO'
+  });
 
   const fetchData = async () => {
     setLoadingData(true);
@@ -85,12 +91,34 @@ export default function AdminDashboard() {
       }));
 
       setMensalidades(mappedMensalidades);
+
+      // Fetch admin users
+      const { data: userData, error: userError } = await supabase
+        .from('usuarios')
+        .select('*')
+        .order('username', { ascending: true });
+
+      if (userError) throw userError;
+      setUsuarios(userData || []);
+
     } catch (err) {
       console.error('Erro ao buscar dados dashboard admin:', err);
     } finally {
       setLoadingData(false);
     }
   };
+
+  useEffect(() => {
+    if (!authLoading && !user && !isAdminLocally) {
+      router.push('/login');
+    }
+  }, [user, authLoading, router, isAdminLocally]);
+
+  useEffect(() => {
+    if (user || isAdminLocally) {
+      fetchData();
+    }
+  }, [user, isAdminLocally, activeTab]);
 
   const handleLogout = async () => {
     sessionStorage.removeItem('isAdmin');
@@ -200,6 +228,74 @@ export default function AdminDashboard() {
     }
   };
 
+  const saveUsuario = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setActionLoading('save_user');
+    try {
+      if (editingUser) {
+        const { error } = await supabase
+          .from('usuarios')
+          .update({
+            username: userForm.username,
+            password: userForm.password,
+            perfil: userForm.perfil,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', editingUser.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('usuarios')
+          .insert([userForm]);
+        if (error) throw error;
+      }
+      
+      setShowUserModal(false);
+      setEditingUser(null);
+      setUserForm({ username: '', password: '', perfil: 'USUARIO' });
+      await fetchData();
+      alert('Usuário salvo com sucesso!');
+    } catch (err) {
+      console.error(err);
+      alert('Erro ao salvar usuário. Verifique se o username já existe.');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const deleteUsuario = async (id: string) => {
+    if (!confirm('Deseja realmente excluir este usuário?')) return;
+    setActionLoading(id);
+    try {
+      const { error } = await supabase
+        .from('usuarios')
+        .delete()
+        .eq('id', id);
+      if (error) throw error;
+      await fetchData();
+    } catch (err) {
+      console.error(err);
+      alert('Erro ao excluir usuário.');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const openUserModal = (userToEdit = null) => {
+    if (userToEdit) {
+      setEditingUser(userToEdit);
+      setUserForm({
+        username: (userToEdit as any).username,
+        password: (userToEdit as any).password,
+        perfil: (userToEdit as any).perfil
+      });
+    } else {
+      setEditingUser(null);
+      setUserForm({ username: '', password: '', perfil: 'USUARIO' });
+    }
+    setShowUserModal(true);
+  };
+
   const filteredAssociados = useMemo(() => {
     return associados.filter(a => 
       a.full_name?.toLowerCase().includes(searchAssociados.toLowerCase()) ||
@@ -207,6 +303,13 @@ export default function AdminDashboard() {
       a.popular_name?.toLowerCase().includes(searchAssociados.toLowerCase())
     );
   }, [associados, searchAssociados]);
+
+  const filteredUsuarios = useMemo(() => {
+    return usuarios.filter(u => 
+      u.username?.toLowerCase().includes(searchUsuarios.toLowerCase()) ||
+      u.perfil?.toLowerCase().includes(searchUsuarios.toLowerCase())
+    );
+  }, [usuarios, searchUsuarios]);
 
   const emAnalise = useMemo(() => mensalidades.filter(m => m.status === 'em_analise'), [mensalidades]);
   
@@ -233,6 +336,7 @@ export default function AdminDashboard() {
     { id: 'dashboard', label: 'Visão Geral', icon: LayoutDashboard },
     { id: 'associados', label: 'Associados', icon: Users },
     { id: 'mensalidades', label: 'Financeiro', icon: CreditCard },
+    { id: 'usuarios', label: 'Usuários Admin', icon: Shield },
   ];
 
   const associadosAtivos = associados.filter(a => a.status === 'ativo').length;
@@ -411,7 +515,7 @@ export default function AdminDashboard() {
                           {filteredAssociados.length === 0 ? (
                             <tr>
                               <td colSpan={4} className="px-6 py-12 text-center text-slate-500">
-                                Nenhum associado encontrado para "{searchAssociados}".
+                                Nenhum associado encontrado para &quot;{searchAssociados}&quot;.
                               </td>
                             </tr>
                           ) : (
@@ -643,11 +747,200 @@ export default function AdminDashboard() {
                     </div>
                   </div>
                 )}
+
+                {/* --- TAB: USUÁRIOS ADMIN --- */}
+                {activeTab === 'usuarios' && (
+                  <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col h-[calc(100vh-160px)] min-h-[600px]">
+                    <div className="p-6 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-50/50">
+                      <div>
+                        <h2 className="text-xl font-bold font-lexend text-slate-800">Gerenciar Usuários Admin</h2>
+                        <p className="text-sm text-slate-500 mt-1">Controle de acesso ao painel administrativo.</p>
+                      </div>
+                      <div className="flex gap-3">
+                        <div className="relative w-full sm:w-64 text-sm font-normal">
+                          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                          <input 
+                            type="text" 
+                            value={searchUsuarios}
+                            onChange={e => setSearchUsuarios(e.target.value)}
+                            placeholder="Buscar usuário..." 
+                            className="pl-9 pr-4 py-2.5 bg-white border border-slate-200 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                          />
+                        </div>
+                        <button
+                          onClick={() => openUserModal()}
+                          className="flex items-center gap-2 px-4 py-2.5 bg-slate-800 text-white rounded-lg font-bold text-sm tracking-wide hover:bg-slate-900 transition-colors shadow-sm"
+                        >
+                          <UserPlus className="w-4 h-4" />
+                          Novo Usuário
+                        </button>
+                      </div>
+                    </div>
+                    
+                    <div className="flex-1 overflow-auto">
+                      <table className="w-full text-left border-collapse">
+                        <thead className="bg-slate-50 border-b border-slate-200 sticky top-0 z-10">
+                          <tr>
+                            <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Username</th>
+                            <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Perfil</th>
+                            <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Criado em</th>
+                            <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Ações</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                          {filteredUsuarios.map((u) => (
+                            <tr key={u.id} className="hover:bg-slate-50/50 transition-colors">
+                              <td className="px-6 py-4">
+                                <div className="flex items-center gap-3">
+                                  <div className="p-2 bg-slate-100 rounded-lg text-slate-500">
+                                    <Shield className="w-4 h-4" />
+                                  </div>
+                                  <span className="font-bold text-slate-800 text-sm">{u.username}</span>
+                                </div>
+                              </td>
+                              <td className="px-6 py-4">
+                                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-bold border uppercase tracking-wider ${
+                                  u.perfil === 'ADMINISTRADOR' ? 'bg-purple-50 text-purple-700 border-purple-200' : 
+                                  u.perfil === 'TECNICO' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                                  'bg-slate-50 text-slate-700 border-slate-200'
+                                }`}>
+                                  {u.perfil}
+                                </span>
+                              </td>
+                              <td className="px-6 py-4 text-xs text-slate-500">
+                                {new Date(u.created_at).toLocaleDateString('pt-BR')}
+                              </td>
+                              <td className="px-6 py-4 text-right">
+                                <div className="flex items-center justify-end gap-2">
+                                  <button
+                                    onClick={() => openUserModal(u)}
+                                    className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors border border-transparent hover:border-blue-100"
+                                    title="Editar Usuário"
+                                  >
+                                    <Edit2 className="w-4 h-4" />
+                                  </button>
+                                  {u.username !== 'admin' && (
+                                    <button
+                                      onClick={() => deleteUsuario(u.id)}
+                                      disabled={actionLoading === u.id}
+                                      className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors border border-transparent hover:border-red-100"
+                                      title="Excluir Usuário"
+                                    >
+                                      {actionLoading === u.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                                    </button>
+                                  )}
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
               </motion.div>
             </AnimatePresence>
           )}
         </div>
       </div>
+
+      {/* User Management Modal */}
+      {showUserModal && (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[150] flex items-center justify-center p-4">
+          <motion.div 
+            initial={{ scale: 0.95, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="bg-white rounded-2xl shadow-xl w-full max-w-[450px] overflow-hidden"
+          >
+            <div className="p-8">
+              <div className="flex items-center justify-between mb-8">
+                <h3 className="font-lexend font-bold text-xl text-slate-800 flex items-center gap-2">
+                  <Shield className="w-6 h-6 text-blue-600" />
+                  {editingUser ? 'Editar Usuário' : 'Novo Usuário Admin'}
+                </h3>
+                <button 
+                  onClick={() => setShowUserModal(false)}
+                  className="text-slate-400 hover:text-slate-600 transition-colors p-1 rounded-full hover:bg-slate-100"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <form onSubmit={saveUsuario} className="space-y-6">
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2" htmlFor="username">
+                    Username
+                  </label>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <input
+                      id="username"
+                      type="text"
+                      value={userForm.username}
+                      onChange={(e) => setUserForm({...userForm, username: e.target.value})}
+                      className="w-full rounded-xl border-2 border-slate-200 bg-slate-50 py-3 pl-10 pr-4 text-slate-900 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all text-sm"
+                      placeholder="Nome de usuário"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2" htmlFor="password">
+                    Senha
+                  </label>
+                  <div className="relative">
+                    <Key className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <input
+                      id="password"
+                      type="password"
+                      value={userForm.password}
+                      onChange={(e) => setUserForm({...userForm, password: e.target.value})}
+                      className="w-full rounded-xl border-2 border-slate-200 bg-slate-50 py-3 pl-10 pr-4 text-slate-900 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all text-sm"
+                      placeholder="Senha de acesso"
+                      required={!editingUser}
+                    />
+                  </div>
+                  {editingUser && <p className="text-[10px] text-slate-500 mt-1">Deixe como está para manter a senha atual.</p>}
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+                    Perfil de Acesso
+                  </label>
+                  <select
+                    value={userForm.perfil}
+                    onChange={(e) => setUserForm({...userForm, perfil: e.target.value})}
+                    className="w-full rounded-xl border-2 border-slate-200 bg-slate-50 py-3 px-4 text-slate-900 focus:bg-white focus:border-blue-500 outline-none transition-all text-sm appearance-none"
+                  >
+                    <option value="ADMINISTRADOR">Administrador</option>
+                    <option value="TECNICO">Técnico</option>
+                    <option value="USUARIO">Usuário</option>
+                  </select>
+                </div>
+
+                <div className="flex gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowUserModal(false)}
+                    className="flex-1 py-3 bg-slate-100 text-slate-600 hover:bg-slate-200 rounded-xl font-bold uppercase tracking-wider text-xs transition-colors"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={actionLoading === 'save_user'}
+                    className="flex-1 py-3 bg-blue-600 text-white hover:bg-blue-700 rounded-xl font-bold uppercase tracking-wider text-xs transition-colors shadow-md disabled:opacity-70 flex items-center justify-center gap-2"
+                  >
+                    {actionLoading === 'save_user' && <Loader2 className="w-4 h-4 animate-spin" />}
+                    Salvar Usuário
+                  </button>
+                </div>
+              </form>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </main>
   );
 }

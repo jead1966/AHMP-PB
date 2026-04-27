@@ -2,10 +2,11 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { Search, User, Bell, Menu, LayoutDashboard, Lock, X } from 'lucide-react';
+import { Search, User, Bell, Menu, LayoutDashboard, Lock, X, Loader2 } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { useState } from 'react';
+import { supabase } from '@/lib/supabase';
 
 export function Navbar() {
   const pathname = usePathname();
@@ -16,20 +17,53 @@ export function Navbar() {
   const [adminUser, setAdminUser] = useState('');
   const [adminPass, setAdminPass] = useState('');
   const [adminError, setAdminError] = useState('');
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   const isActive = (path: string) => pathname === path;
 
-  const handleAdminAccess = (e: React.FormEvent) => {
+  const handleAdminAccess = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (adminUser === 'admin' && adminPass === 'ahmp1969') {
+    setIsLoggingIn(true);
+    setAdminError('');
+
+    try {
+      const { data, error } = await supabase
+        .from('usuarios')
+        .select('*')
+        .eq('username', adminUser)
+        .eq('password', adminPass)
+        .single();
+
+      if (error) {
+        console.error('Erro de login admin:', error);
+        const errorMessage = error.message || '';
+        if (error.code === 'PGRST116') {
+          setAdminError('Usuário ou senha incorretos.');
+        } else if (errorMessage.toLowerCase().includes('relation "usuarios" does not exist') || errorMessage.toLowerCase().includes('não existe')) {
+          setAdminError('Erro de sistema: A tabela "usuarios" não foi encontrada. Por favor, execute o script SQL de criação no seu dashboard do Supabase.');
+        } else {
+          setAdminError(`Erro ao tentar acessar: ${errorMessage || 'Verifique sua conexão.'}`);
+        }
+        return;
+      }
+
+      if (!data) {
+        setAdminError('Credenciais inválidas!');
+        return;
+      }
+
       setShowAdminModal(false);
       setAdminUser('');
       setAdminPass('');
       setAdminError('');
       sessionStorage.setItem('isAdmin', 'true');
+      sessionStorage.setItem('adminProfile', JSON.stringify(data));
       router.push('/admin');
-    } else {
-      setAdminError('Credenciais inválidas!');
+    } catch (err) {
+      console.error(err);
+      setAdminError('Erro ao processar login.');
+    } finally {
+      setIsLoggingIn(false);
     }
   };
 
@@ -90,7 +124,7 @@ export function Navbar() {
                   <Link
                     href="/painel-associado"
                     className={`flex items-center gap-2 font-lexend font-bold text-xs uppercase transition-all duration-200 py-2 px-2 sm:px-3 rounded-lg ${
-                      isActive('/painel-associado') ? 'bg-orange-500 text-white shadow-sm' : 'text-slate-700 hover:text-orange-500 hover:bg-slate-50'
+                      isActive('/painel-associado') ? 'bg-orange-500 text-white shadow-sm' : 'text-white md:text-slate-700 hover:text-orange-500 hover:bg-slate-50'
                     }`}
                   >
                     <LayoutDashboard className="w-5 h-5 sm:w-4 sm:h-4" />
@@ -100,7 +134,7 @@ export function Navbar() {
                   <Link
                     href="/login"
                     className={`flex items-center gap-2 font-lexend font-bold text-xs uppercase transition-all duration-200 py-2 px-2 sm:px-3 rounded-lg ${
-                      isActive('/login') ? 'bg-orange-500 text-white shadow-sm' : 'text-slate-700 hover:text-orange-500 hover:bg-slate-50'
+                      isActive('/login') ? 'bg-orange-500 text-white shadow-sm' : 'text-white md:text-slate-700 hover:text-orange-500 hover:bg-slate-50'
                     }`}
                   >
                     <User className="w-5 h-5 sm:w-4 sm:h-4" />
@@ -112,13 +146,13 @@ export function Navbar() {
           </div>
 
           <div className="flex items-center gap-2 sm:gap-4">
-            <button className="text-slate-700 hover:text-orange-500 transition-colors p-2 rounded-full hover:bg-slate-100">
+            <button className="text-white md:text-slate-700 hover:text-orange-500 transition-colors p-2 rounded-full hover:bg-slate-100">
               <Search className="w-5 h-5" />
             </button>
-            <button onClick={() => setShowAdminModal(true)} className="text-slate-700 hover:text-orange-500 transition-colors p-2 rounded-full hover:bg-slate-100">
+            <button onClick={() => setShowAdminModal(true)} className="text-white md:text-slate-700 hover:text-orange-500 transition-colors p-2 rounded-full hover:bg-slate-100">
               <Lock className="w-5 h-5" />
             </button>
-            <button className="text-slate-700 hover:text-orange-500 transition-colors p-2 rounded-full hover:bg-slate-100 relative">
+            <button className="text-white md:text-slate-700 hover:text-orange-500 transition-colors p-2 rounded-full hover:bg-slate-100 relative">
               <Bell className="w-5 h-5" />
               <span className="absolute top-1 right-1 w-2 h-2 bg-orange-500 rounded-full border-2 border-white"></span>
             </button>
@@ -132,7 +166,7 @@ export function Navbar() {
               </Link>
             )}
 
-            <button className="md:hidden text-slate-700 p-2 rounded-full hover:bg-slate-100">
+            <button className="md:hidden text-white p-2 rounded-full hover:bg-slate-100">
               <Menu className="w-6 h-6" />
             </button>
           </div>
@@ -200,8 +234,10 @@ export function Navbar() {
 
               <button
                 type="submit"
-                className="w-full mt-2 py-3 bg-slate-800 text-white hover:bg-slate-900 rounded-xl font-bold uppercase tracking-wider text-sm transition-colors shadow-sm"
+                disabled={isLoggingIn}
+                className="w-full mt-2 py-3 bg-slate-800 text-white hover:bg-slate-900 rounded-xl font-bold uppercase tracking-wider text-sm transition-colors shadow-sm flex items-center justify-center gap-2"
               >
+                {isLoggingIn && <Loader2 className="w-4 h-4 animate-spin" />}
                 Acessar Painel Admin
               </button>
             </form>
