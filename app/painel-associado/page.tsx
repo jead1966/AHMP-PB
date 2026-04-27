@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
+import { formatBRL } from '@/lib/utils';
 import { 
   User, 
   CreditCard, 
@@ -343,7 +344,7 @@ export default function PainelAssociado() {
                                   return (
                                     <div className="bg-white p-3 rounded-lg border border-outline shadow-lg text-sm">
                                       <p className="font-bold">{payload[0].payload.name}</p>
-                                      <p className="text-primary">R$ {payload[0].value}</p>
+                                      <p className="text-primary">{formatBRL(payload[0].value as number)}</p>
                                       <p className={payload[0].payload.status === 'paga' ? 'text-green-600' : 'text-orange-600'}>
                                         {payload[0].payload.status.toUpperCase()}
                                       </p>
@@ -390,7 +391,7 @@ export default function PainelAssociado() {
                             </div>
                           </div>
                           <div className="text-right">
-                            <p className="font-bold text-on-surface">R$ {m.amount.toFixed(2)}</p>
+                            <p className="font-bold text-on-surface">{formatBRL(m.amount)}</p>
                             <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded-full ${m.status === 'paga' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>
                               {m.status}
                             </span>
@@ -524,7 +525,7 @@ export default function PainelAssociado() {
                         {mensalidades.map((m) => (
                           <tr key={m.id} className="hover:bg-gray-50 transition-colors">
                             <td className="px-6 py-4 font-bold text-on-surface">{m.month}/{m.year}</td>
-                            <td className="px-6 py-4 text-on-surface">R$ {m.amount.toFixed(2)}</td>
+                            <td className="px-6 py-4 text-on-surface">{formatBRL(m.amount)}</td>
                             <td className="px-6 py-4">
                               <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase ${
                                 m.status === 'paga' ? 'bg-green-100 text-green-700' : m.status === 'em_analise' ? 'bg-blue-100 text-blue-700' : m.status === 'pendente' ? 'bg-orange-100 text-orange-700' : 'bg-red-100 text-red-700'

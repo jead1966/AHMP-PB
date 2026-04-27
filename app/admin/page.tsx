@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
+import { formatBRL } from '@/lib/utils';
 import { 
   Users, 
   CreditCard, 
@@ -592,11 +593,11 @@ export default function AdminDashboard() {
                           </div>
                           <div>
                             <p className="text-sm font-medium text-slate-500 uppercase tracking-wide">Arrecadação do Mês</p>
-                            <h3 className="text-3xl font-bold text-emerald-700">R$ {financeSummary.monthPaid.toFixed(2)}</h3>
+                            <h3 className="text-3xl font-bold text-emerald-700">{formatBRL(financeSummary.monthPaid)}</h3>
                           </div>
                         </div>
                         <div className="pt-4 border-t border-slate-100 text-sm mt-2">
-                          <p className="text-slate-500 font-medium">Previsão pendente: <span className="text-orange-600">R$ {financeSummary.monthPending.toFixed(2)}</span></p>
+                          <p className="text-slate-500 font-medium">Previsão pendente: <span className="text-orange-600">{formatBRL(financeSummary.monthPending)}</span></p>
                         </div>
                       </div>
 
@@ -607,7 +608,7 @@ export default function AdminDashboard() {
                           </div>
                           <div>
                             <p className="text-sm font-medium text-slate-500 uppercase tracking-wide">Total Arrecadado</p>
-                            <h3 className="text-3xl font-bold text-slate-800">R$ {financeSummary.totalPaid.toFixed(2)}</h3>
+                            <h3 className="text-3xl font-bold text-slate-800">{formatBRL(financeSummary.totalPaid)}</h3>
                           </div>
                         </div>
                         <div className="pt-4 border-t border-slate-100 text-sm mt-2">
@@ -719,7 +720,7 @@ export default function AdminDashboard() {
                       <div className="bg-emerald-600 text-white p-6 rounded-xl shadow-lg shadow-emerald-200/50 relative overflow-hidden">
                         <div className="relative z-10">
                           <p className="text-emerald-100 text-sm font-bold uppercase tracking-wider mb-1">Total Arrecadado no Mês</p>
-                          <h3 className="text-4xl font-black font-lexend">R$ {financeSummary.monthPaid.toFixed(2)}</h3>
+                          <h3 className="text-4xl font-black font-lexend">{formatBRL(financeSummary.monthPaid)}</h3>
                         </div>
                         <TrendingUp className="absolute right-[-10px] bottom-[-10px] w-32 h-32 text-emerald-500/20" />
                       </div>
@@ -727,7 +728,7 @@ export default function AdminDashboard() {
                       <div className="bg-orange-500 text-white p-6 rounded-xl shadow-lg shadow-orange-200/50 relative overflow-hidden">
                         <div className="relative z-10">
                           <p className="text-orange-100 text-sm font-bold uppercase tracking-wider mb-1">Previsão Pendente (Mês)</p>
-                          <h3 className="text-4xl font-black font-lexend">R$ {financeSummary.monthPending.toFixed(2)}</h3>
+                          <h3 className="text-4xl font-black font-lexend">{formatBRL(financeSummary.monthPending)}</h3>
                         </div>
                         <Clock className="absolute right-[-10px] bottom-[-10px] w-32 h-32 text-orange-400/20" />
                       </div>
@@ -824,7 +825,7 @@ export default function AdminDashboard() {
                                     </span>
                                   </td>
                                   <td className="px-6 py-4 text-sm font-bold text-slate-700">
-                                    R$ {m.amount.toFixed(2)}
+                                    {formatBRL(m.amount)}
                                   </td>
                                   <td className="px-6 py-4">
                                     <span className={`inline-flex items-center px-2 py-1 rounded-md text-[10px] font-black border uppercase tracking-tighter ${
