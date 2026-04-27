@@ -157,6 +157,7 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     if (user || isAdminLocally) {
+      // eslint-disable-next-line
       fetchData(true);
     }
   }, [user, isAdminLocally, fetchData]);
@@ -250,8 +251,7 @@ export default function AdminDashboard() {
             year: paymentForm.year,
             amount: paymentForm.amount,
             status: 'paga',
-            payment_date: new Date().toISOString().split('T')[0],
-            due_date: new Date(paymentForm.year, paymentForm.month - 1, 15).toISOString().split('T')[0]
+            payment_date: new Date().toISOString().split('T')[0]
           });
         
         if (insertError) throw insertError;
@@ -326,8 +326,7 @@ export default function AdminDashboard() {
             month: mes,
             year: ano,
             amount: valorBase,
-            status: 'pendente',
-            due_date: new Date(ano, mes - 1, 15).toISOString().split('T')[0]
+            status: 'pendente'
           });
           count++;
         }
@@ -336,13 +335,15 @@ export default function AdminDashboard() {
       if (inserts.length > 0) {
         const { error } = await supabase.from('mensalidades').insert(inserts);
         if (error) throw error;
+        alert(`${count} mensalidades geradas com sucesso!`);
+      } else {
+        alert('Todas as mensalidades do mês atual já foram geradas previamente. Nenhuma nova mensalidade foi criada.');
       }
       
-      alert(`${count} mensalidades geradas com sucesso!`);
       await fetchData(true);
-    } catch (err) {
-      console.error(err);
-      alert('Erro ao gerar mensalidades. Tente novamente.');
+    } catch (err: any) {
+      console.error("ERRO COMPLETO:", err);
+      alert(`Erro ao gerar mensalidades: ${err?.message || err}`);
     } finally {
       setActionLoading(null);
     }

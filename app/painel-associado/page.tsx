@@ -67,6 +67,7 @@ export default function PainelAssociado() {
 
   useEffect(() => {
     if (profile) {
+      // eslint-disable-next-line
       setFormProfile({
         full_name: profile.full_name || '',
         popular_name: profile.popular_name || '',
