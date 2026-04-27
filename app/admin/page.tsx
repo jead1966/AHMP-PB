@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
@@ -116,7 +116,7 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     if (user || isAdminLocally) {
-      fetchData();
+      void fetchData();
     }
   }, [user, isAdminLocally, activeTab, fetchData]);
 
