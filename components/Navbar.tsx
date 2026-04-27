@@ -14,12 +14,14 @@ export function Navbar() {
   const { user, loading } = useAuth();
   
   const [showAdminModal, setShowAdminModal] = useState(false);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [adminUser, setAdminUser] = useState('');
   const [adminPass, setAdminPass] = useState('');
   const [adminError, setAdminError] = useState('');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   const isActive = (path: string) => pathname === path;
+  const closeMobileMenu = () => setShowMobileMenu(false);
 
   const handleAdminAccess = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -166,12 +168,68 @@ export function Navbar() {
               </Link>
             )}
 
-            <button className="md:hidden text-white p-2 rounded-full hover:bg-slate-100">
-              <Menu className="w-6 h-6" />
+            <button 
+              onClick={() => setShowMobileMenu(!showMobileMenu)}
+              className="md:hidden text-white p-2 rounded-full hover:bg-slate-100"
+            >
+              {showMobileMenu ? <X className="w-6 h-6 text-slate-800" /> : <Menu className="w-6 h-6" />}
             </button>
           </div>
         </div>
       </div>
+
+      {/* Mobile Menu Overlay */}
+      {showMobileMenu && (
+        <div className="md:hidden fixed inset-0 top-[66px] bg-white z-[60] animate-in slide-in-from-top-4 duration-300">
+          <nav className="flex flex-col p-6 gap-4">
+            <Link
+              href="/"
+              onClick={closeMobileMenu}
+              className={`font-lexend font-bold text-lg p-3 rounded-xl transition-colors ${
+                isActive('/') ? 'bg-orange-50 text-orange-600' : 'text-slate-700 hover:bg-slate-50'
+              }`}
+            >
+              Início
+            </Link>
+            <Link
+              href="/institucional"
+              onClick={closeMobileMenu}
+              className={`font-lexend font-bold text-lg p-3 rounded-xl transition-colors ${
+                isActive('/institucional') ? 'bg-orange-50 text-orange-600' : 'text-slate-700 hover:bg-slate-50'
+              }`}
+            >
+              Institucional
+            </Link>
+            <Link
+              href="/contato"
+              onClick={closeMobileMenu}
+              className={`font-lexend font-bold text-lg p-3 rounded-xl transition-colors ${
+                isActive('/contato') ? 'bg-orange-50 text-orange-600' : 'text-slate-700 hover:bg-slate-50'
+              }`}
+            >
+              Contato
+            </Link>
+            <div className="h-px bg-slate-100 my-2"></div>
+            {!user && (
+              <Link
+                href="/cadastro"
+                onClick={closeMobileMenu}
+                className="bg-orange-500 text-white p-4 rounded-xl font-bold text-base text-center transition-all shadow-sm active:scale-[0.98]"
+              >
+                Seja Sócio
+              </Link>
+            )}
+            <Link
+              href="/login"
+              onClick={closeMobileMenu}
+              className="flex items-center justify-center gap-3 border-2 border-slate-200 text-slate-700 p-4 rounded-xl font-bold text-base transition-all hover:bg-slate-50"
+            >
+              <User className="w-5 h-5" />
+              Acesso Sócio
+            </Link>
+          </nav>
+        </div>
+      )}
     </header>
 
     {showAdminModal && (

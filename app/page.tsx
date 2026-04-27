@@ -8,8 +8,8 @@ export default function Home() {
       {/* Seção Hero */}
       <section className="relative w-full flex items-center justify-center overflow-hidden h-[300px]">
         <div className="relative z-20 text-center px-4 max-w-4xl mx-auto flex flex-col items-center">
-          <h1 className="font-headline-xl text-headline-xl mb-6 drop-shadow-lg text-[#FF8C00]">Associação de Handebol Master da Paraíba - AHMP</h1>
-          <p className="font-body-lg mb-8 max-w-2xl mx-auto text-primary-container font-bold text-2xl">Elevando o esporte, unindo atletas. Junte-se à maior comunidade de handebol da região e participe de competições de alto nível.</p>
+          <h1 className="font-headline-xl text-3xl sm:text-4xl md:text-5xl lg:text-headline-xl mb-6 drop-shadow-lg text-[#FF8C00]">Associação de Handebol Master da Paraíba - AHMP</h1>
+          <p className="font-body-lg mb-8 max-w-2xl mx-auto text-primary-container font-bold text-lg sm:text-xl md:text-2xl">Elevando o esporte, unindo atletas. Junte-se à maior comunidade de handebol da região e participe de competições de alto nível.</p>
         </div>
       </section>
 

@@ -61,7 +61,7 @@ export default function AdminDashboard() {
     perfil: 'USUARIO'
   });
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoadingData(true);
     try {
       const { data: assocData, error: assocError } = await supabase
@@ -106,7 +106,7 @@ export default function AdminDashboard() {
     } finally {
       setLoadingData(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     if (!authLoading && !user && !isAdminLocally) {
@@ -118,7 +118,7 @@ export default function AdminDashboard() {
     if (user || isAdminLocally) {
       fetchData();
     }
-  }, [user, isAdminLocally, activeTab]);
+  }, [user, isAdminLocally, activeTab, fetchData]);
 
   const handleLogout = async () => {
     sessionStorage.removeItem('isAdmin');

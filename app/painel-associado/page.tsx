@@ -68,7 +68,7 @@ export default function PainelAssociado() {
     }
   }, [user]);
 
-  const handleUploadReceipt = async (mensalidadeId: string, event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleUploadReceipt = useCallback(async (mensalidadeId: string, event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file || !user) return;
 
@@ -111,7 +111,7 @@ export default function PainelAssociado() {
       // clear input
       event.target.value = '';
     }
-  };
+  }, [user, fetchMensalidades]);
 
   useEffect(() => {
     if (!authLoading && !user) {
