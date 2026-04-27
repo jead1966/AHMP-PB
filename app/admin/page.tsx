@@ -74,13 +74,23 @@ export default function AdminDashboard() {
   const fetchData = useCallback(async (silent = false) => {
     if (!silent) setLoadingData(true);
     try {
+      // Diagnostic check for Auth session
+      const { data: sessionData } = await supabase.auth.getSession();
+      const hasAuthSession = !!sessionData.session;
+      
       const { data: assocData, error: assocError } = await supabase
         .from('associados')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('full_name', { ascending: true });
 
       if (assocError) throw assocError;
-      setAssociados(assocData || []);
+      
+      const associadosList = assocData || [];
+      setAssociados(associadosList);
+
+      if (associadosList.length === 0 && !silent && !hasAuthSession) {
+        console.warn('A lista de associados retornou vazia e não há sessão de autenticação Supabase ativa. Provavelmente é um problema de RLS.');
+      }
 
       const { data: mensData, error: mensError } = await supabase
         .from('mensalidades')
@@ -92,6 +102,7 @@ export default function AdminDashboard() {
 
       const associadosMap = new Map();
       (assocData || []).forEach(a => {
+        // Use user_id as key as it's used as the foreign key in mensalidades
         associadosMap.set(a.user_id, a);
       });
 
@@ -111,8 +122,11 @@ export default function AdminDashboard() {
       if (userError) throw userError;
       setUsuarios(userData || []);
 
-    } catch (err) {
+    } catch (err: any) {
       console.error('Erro ao buscar dados dashboard admin:', err);
+      if (!silent) {
+        alert('Erro ao carregar dados do banco de dados. Verifique a conexão ou permissões RLS.');
+      }
     } finally {
       setLoadingData(false);
     }
@@ -126,12 +140,13 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     if (user || isAdminLocally) {
-      Promise.resolve().then(() => fetchData(true));
+      fetchData(true);
     }
-  }, [user, isAdminLocally, activeTab, fetchData]);
+  }, [user, isAdminLocally, fetchData]);
 
   const handleLogout = async () => {
     sessionStorage.removeItem('isAdmin');
+    sessionStorage.removeItem('adminProfile');
     await supabase.auth.signOut();
     router.push('/');
   };
@@ -148,7 +163,7 @@ export default function AdminDashboard() {
         .eq('id', id);
 
       if (error) throw error;
-      await fetchData();
+      await fetchData(true);
     } catch (err) {
       console.error(err);
       alert('Erro ao aprovar mensalidade');
@@ -169,7 +184,7 @@ export default function AdminDashboard() {
         .eq('id', id);
 
       if (error) throw error;
-      await fetchData();
+      await fetchData(true);
     } catch (err) {
       console.error(err);
       alert('Erro ao rejeitar mensalidade');
@@ -191,9 +206,9 @@ export default function AdminDashboard() {
         .eq('associado_id', paymentForm.associado_id)
         .eq('month', paymentForm.month)
         .eq('year', paymentForm.year)
-        .single();
+        .maybeSingle();
 
-      if (checkError && checkError.code !== 'PGRST116') throw checkError;
+      if (checkError) throw checkError;
 
       if (existing) {
         // Update existing record
@@ -233,7 +248,7 @@ export default function AdminDashboard() {
         amount: 50.00,
         payment_method: 'Pix'
       });
-      await fetchData();
+      await fetchData(true);
       alert('Pagamento registrado com sucesso!');
     } catch (err) {
       console.error(err);
@@ -252,7 +267,7 @@ export default function AdminDashboard() {
         .eq('user_id', userId);
 
       if (error) throw error;
-      await fetchData();
+      await fetchData(true);
     } catch (err) {
       console.error(err);
       alert('Erro ao atualizar associado');
@@ -262,42 +277,55 @@ export default function AdminDashboard() {
   };
 
   const gerarMensalidadeMesAtual = async () => {
-    if (!confirm('Deseja gerar a mensalidade do mês atual para todos os associados ativos?')) return;
+    if (associados.length === 0) {
+      return alert('Aguarde carregar a lista de associados ou verifique se existem associados cadastrados.');
+    }
+
+    if (!confirm('Deseja gerar a mensalidade do mês atual para todos os associados ATIVOS?')) return;
     
     setActionLoading('gerar_mensalidades');
     try {
       const ativos = associados.filter(a => a.status === 'ativo');
+      if (ativos.length === 0) {
+        alert('Não há associados com status ATIVO para gerar mensalidades.');
+        return;
+      }
+
       const hoje = new Date();
       const mes = hoje.getMonth() + 1;
       const ano = hoje.getFullYear();
       const valorBase = 50.00; // Valor padrão
       
-      let promises = [];
+      let count = 0;
+      const inserts = [];
       
       for (const associado of ativos) {
-        // Verifica se já existe
+        // Verifica se já existe localmente primeiro para evitar requests desnecessários
         const existente = mensalidades.find(m => m.associado_id === associado.user_id && m.month === mes && m.year === ano);
         
         if (!existente) {
-          promises.push(
-            supabase.from('mensalidades').insert({
-              associado_id: associado.user_id,
-              month: mes,
-              year: ano,
-              amount: valorBase,
-              status: 'pendente',
-              due_date: new Date(ano, mes - 1, 15).toISOString().split('T')[0] // Vence dia 15
-            })
-          );
+          inserts.push({
+            associado_id: associado.user_id,
+            month: mes,
+            year: ano,
+            amount: valorBase,
+            status: 'pendente',
+            due_date: new Date(ano, mes - 1, 15).toISOString().split('T')[0]
+          });
+          count++;
         }
       }
       
-      await Promise.all(promises);
-      alert(`${promises.length} mensalidades geradas com sucesso!`);
-      await fetchData();
+      if (inserts.length > 0) {
+        const { error } = await supabase.from('mensalidades').insert(inserts);
+        if (error) throw error;
+      }
+      
+      alert(`${count} mensalidades geradas com sucesso!`);
+      await fetchData(true);
     } catch (err) {
       console.error(err);
-      alert('Erro ao gerar mensalidades.');
+      alert('Erro ao gerar mensalidades. Tente novamente.');
     } finally {
       setActionLoading(null);
     }
@@ -514,7 +542,27 @@ export default function AdminDashboard() {
                 {/* --- TAB: DASHBOARD --- */}
                 {activeTab === 'dashboard' && (
                   <>
-                    <h1 className="text-3xl font-bold font-lexend text-slate-800">Visão Geral</h1>
+                    <div className="flex items-center justify-between mb-2">
+                       <h1 className="text-3xl font-bold font-lexend text-slate-800">Visão Geral</h1>
+                       <button 
+                        onClick={() => fetchData()}
+                        className="p-2 text-slate-400 hover:text-blue-600 transition-colors rounded-lg hover:bg-blue-50 flex items-center gap-2 text-xs font-bold"
+                        title="Atualizar Dados"
+                       >
+                         <Clock className="w-4 h-4" />
+                         Atualizar Agora
+                       </button>
+                    </div>
+                    
+                    {associados.length === 0 && !loadingData && (
+                      <div className="bg-orange-50 border border-orange-200 p-4 rounded-xl mb-6 flex items-start gap-4">
+                        <AlertCircle className="w-6 h-6 text-orange-600 shrink-0 mt-0.5" />
+                        <div>
+                          <h4 className="font-bold text-orange-800">Nenhum dado encontrado</h4>
+                          <p className="text-sm text-orange-700">A lista de associados está vindo vazia do banco de dados. Isso pode ser erro de permissão RLS ou banco de dados zerado.</p>
+                        </div>
+                      </div>
+                    )}
                     
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                       <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
@@ -905,103 +953,123 @@ export default function AdminDashboard() {
       {showPaymentModal && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
           <motion.div 
-            initial={{ scale: 0.95, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] relative"
+            style={{ width: '95%', maxWidth: '500px', minWidth: '320px' }}
           >
-            <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-emerald-600 text-white">
+            <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-emerald-600 text-white shrink-0">
               <h3 className="text-xl font-bold font-lexend">Lançar Pagamento Manual</h3>
               <button 
                 onClick={() => setShowPaymentModal(false)}
-                className="p-1 hover:bg-emerald-500 rounded-full transition-colors"
+                className="p-1 hover:bg-emerald-500 rounded-full transition-colors flex items-center justify-center"
               >
                 <X className="w-6 h-6" />
               </button>
             </div>
             
-            <form onSubmit={recordManualPayment} className="p-6 space-y-4">
-              <div>
-                <label className="block text-sm font-bold text-slate-700 mb-1.5">Associado</label>
-                <select 
-                  required
-                  value={paymentForm.associado_id}
-                  onChange={e => setPaymentForm({...paymentForm, associado_id: e.target.value})}
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-                >
-                  <option value="">Selecione um associado...</option>
-                  {associados.filter(a => a.status === 'ativo').map(a => (
-                    <option key={a.id} value={a.user_id}>{a.full_name} ({a.popular_name})</option>
-                  ))}
-                </select>
-              </div>
+            <div className="flex-1 overflow-y-auto custom-scrollbar p-6">
+              <form onSubmit={recordManualPayment} className="space-y-5">
+                <div className="bg-emerald-50 border border-emerald-100 p-3 rounded-lg mb-2">
+                  <p className="text-xs text-emerald-800 font-medium">Use este formulário para registrar pagamentos recebidos fora do sistema (Pix direto ou dinheiro).</p>
+                </div>
 
-              <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-1.5">Mês</label>
+                  <label className="block text-sm font-bold text-slate-700 mb-1.5 flex items-center gap-1.5">
+                    <Users className="w-4 h-4 text-slate-400" /> Associado
+                  </label>
                   <select 
                     required
-                    value={paymentForm.month}
-                    onChange={e => setPaymentForm({...paymentForm, month: parseInt(e.target.value)})}
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none"
+                    value={paymentForm.associado_id}
+                    onChange={e => setPaymentForm({...paymentForm, associado_id: e.target.value})}
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-sm font-medium"
                   >
-                    {[...Array(12)].map((_, i) => (
-                      <option key={i+1} value={i+1}>{String(i+1).padStart(2, '0')}</option>
+                    <option value="">Selecione um associado...</option>
+                    {associados.filter(a => a.status === 'ativo').map(a => (
+                      <option key={a.id} value={a.user_id}>{a.full_name} ({a.popular_name})</option>
                     ))}
                   </select>
                 </div>
-                <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-1.5">Ano</label>
-                  <select 
-                    required
-                    value={paymentForm.year}
-                    onChange={e => setPaymentForm({...paymentForm, year: parseInt(e.target.value)})}
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none"
-                  >
-                    <option value={new Date().getFullYear()}>{new Date().getFullYear()}</option>
-                    <option value={new Date().getFullYear() - 1}>{new Date().getFullYear() - 1}</option>
-                  </select>
-                </div>
-              </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-1.5">Valor (R$)</label>
-                  <input 
-                    type="number" 
-                    step="0.01"
-                    min="0"
-                    required
-                    value={paymentForm.amount}
-                    onChange={e => setPaymentForm({...paymentForm, amount: parseFloat(e.target.value)})}
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none"
-                  />
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-bold text-slate-700 mb-1.5">Mês de Referência</label>
+                    <select 
+                      required
+                      value={paymentForm.month}
+                      onChange={e => setPaymentForm({...paymentForm, month: parseInt(e.target.value)})}
+                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm"
+                    >
+                      {[...Array(12)].map((_, i) => (
+                        <option key={i+1} value={i+1}>{String(i+1).padStart(2, '0')} - {new Date(2000, i).toLocaleString('pt-BR', { month: 'long' })}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-slate-700 mb-1.5">Ano</label>
+                    <select 
+                      required
+                      value={paymentForm.year}
+                      onChange={e => setPaymentForm({...paymentForm, year: parseInt(e.target.value)})}
+                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm"
+                    >
+                      <option value={new Date().getFullYear()}>{new Date().getFullYear()}</option>
+                      <option value={new Date().getFullYear() - 1}>{new Date().getFullYear() - 1}</option>
+                      <option value={new Date().getFullYear() + 1}>{new Date().getFullYear() + 1}</option>
+                    </select>
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-1.5">Método</label>
-                  <select 
-                    value={paymentForm.payment_method}
-                    onChange={e => setPaymentForm({...paymentForm, payment_method: e.target.value})}
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none"
-                  >
-                    <option value="Pix">Pix</option>
-                    <option value="Dinheiro">Dinheiro</option>
-                    <option value="Cartão">Cartão</option>
-                    <option value="Transferência">Transferência</option>
-                  </select>
-                </div>
-              </div>
 
-              <div className="pt-4">
-                <button
-                  type="submit"
-                  disabled={actionLoading === 'manual_payment'}
-                  className="w-full bg-emerald-600 text-white font-black py-4 rounded-xl shadow-lg hover:bg-emerald-700 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
-                >
-                  {actionLoading === 'manual_payment' && <Loader2 className="w-5 h-5 animate-spin" />}
-                  Confirmar Pagamento
-                </button>
-              </div>
-            </form>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-bold text-slate-700 mb-1.5">Valor Recebido</label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold font-lexend">R$</span>
+                      <input 
+                        type="number" 
+                        step="0.01"
+                        min="0"
+                        required
+                        value={paymentForm.amount}
+                        onChange={e => setPaymentForm({...paymentForm, amount: parseFloat(e.target.value)})}
+                        className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 font-bold"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-slate-700 mb-1.5">Método</label>
+                    <select 
+                      value={paymentForm.payment_method}
+                      onChange={e => setPaymentForm({...paymentForm, payment_method: e.target.value})}
+                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm font-medium"
+                    >
+                      <option value="Pix">Pix</option>
+                      <option value="Dinheiro">Dinheiro</option>
+                      <option value="Cartão">Cartão</option>
+                      <option value="Transferência">Transferência</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="pt-6 border-t border-slate-100 flex flex-col gap-3">
+                  <button
+                    type="submit"
+                    disabled={actionLoading === 'manual_payment'}
+                    className="w-full bg-emerald-600 text-white font-black py-4 rounded-xl shadow-lg hover:bg-emerald-700 hover:shadow-emerald-200/50 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-3 uppercase tracking-wider text-xs"
+                  >
+                    {actionLoading === 'manual_payment' ? <Loader2 className="w-5 h-5 animate-spin" /> : <CheckCircle2 className="w-5 h-5" />}
+                    Confirmar Lançamento
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowPaymentModal(false)}
+                    className="w-full py-3 text-slate-500 font-bold text-xs uppercase tracking-wider hover:text-slate-700 transition-colors"
+                  >
+                    Cancelar Operação
+                  </button>
+                </div>
+              </form>
+            </div>
           </motion.div>
         </div>
       )}
