@@ -513,8 +513,11 @@ export default function PainelAssociado() {
                                 
                                 const { error: dbError } = await supabase
                                   .from('associados')
-                                  .update({ photo_url: publicUrl })
-                                  .eq('user_id', user.id);
+                                  .update({ 
+                                    photo_url: publicUrl,
+                                    user_id: user.id 
+                                  })
+                                  .eq('id', profile.id);
                                 
                                 if (dbError) throw dbError;
                                 setSuccessMsg('Foto atualizada com sucesso!');

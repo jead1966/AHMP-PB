@@ -137,7 +137,9 @@ export default function Cadastro() {
 
       const { error: dbError } = await supabase
         .from('associados')
-        .insert([associadoData]);
+        .upsert([{
+          ...associadoData
+        }], { onConflict: 'user_id' });
 
       if (dbError) throw dbError;
       
@@ -152,7 +154,13 @@ export default function Cadastro() {
       let msg = error.message || 'Erro ao realizar cadastro.';
       
       // Handle specific Supabase / Postgres errors for better UX
-      if (msg.includes('already registered')) {
+      if (msg.includes('row-level security policy')) {
+        msg = 'Erro de permissão no banco de dados. Por favor, tente novamente ou entre em contato com o suporte se o erro persistir.';
+        console.error('RLS Violation during registration:', {
+          userId: authData?.user?.id,
+          hasSession: !!authData?.session
+        });
+      } else if (msg.includes('already registered')) {
         msg = 'Opa! Esse e-mail já foi cadastrado anteriormente em nosso sistema. Você não precisa se cadastrar novamente. Por favor, vá para a tela de login e entre com sua senha.';
         setStatus('error');
       } else if (msg.includes('duplicate key value')) {
