@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
+import Image from 'next/image';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
@@ -129,7 +130,8 @@ export default function AdminDashboard() {
     birthday: '',
     category: '',
     position: '',
-    club: ''
+    club: '',
+    photo_url: ''
   });
 
   // User Form states
@@ -792,6 +794,7 @@ export default function AdminDashboard() {
             category: associadoForm.category,
             position: associadoForm.position,
             club: associadoForm.club,
+            photo_url: associadoForm.photo_url
           })
           .eq('id', editingAssociado.id);
         if (error) throw error;
@@ -822,7 +825,8 @@ export default function AdminDashboard() {
         birthday: (associadoToEdit as any).birthday || '',
         category: (associadoToEdit as any).category || '',
         position: (associadoToEdit as any).position || '',
-        club: (associadoToEdit as any).club || ''
+        club: (associadoToEdit as any).club || '',
+        photo_url: (associadoToEdit as any).photo_url || ''
       });
       setShowAssociadoModal(true);
     }
@@ -1116,8 +1120,12 @@ export default function AdminDashboard() {
                               <tr key={a.id} className="hover:bg-slate-50/50 transition-colors group">
                                 <td className="px-6 py-4">
                                   <div className="flex items-center gap-3">
-                                    <div className="w-8 h-8 rounded-full bg-slate-200 flex flex-shrink-0 items-center justify-center text-slate-500 font-bold text-xs uppercase">
-                                      {a.full_name?.charAt(0) || '?'}
+                                    <div className="w-10 h-10 rounded-full bg-slate-200 flex flex-shrink-0 items-center justify-center text-slate-500 font-bold text-sm uppercase overflow-hidden relative">
+                                      {a.photo_url ? (
+                                        <Image fill src={a.photo_url} alt="" className="object-cover" />
+                                      ) : (
+                                        a.full_name?.charAt(0) || '?'
+                                      )}
                                     </div>
                                     <div>
                                       <p className="font-bold text-slate-800 text-sm">{a.full_name}</p>
@@ -1754,6 +1762,17 @@ export default function AdminDashboard() {
             <div className="p-6 overflow-y-auto w-full">
               <form id="edit-associado-form" onSubmit={saveAssociado} className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-4">
+                  <div className="md:col-span-2">
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2" htmlFor="photo_url">URL da Foto</label>
+                    <input 
+                      name="photo_url" 
+                      id="photo_url" 
+                      className="w-full rounded-xl border border-slate-300 bg-white py-3 px-4 text-slate-900 focus:ring-2 focus:ring-blue-500/20 transition-all outline-none" 
+                      value={associadoForm.photo_url}
+                      onChange={(e) => setAssociadoForm({...associadoForm, photo_url: e.target.value})}
+                      placeholder="https://..."
+                    />
+                  </div>
                   <div>
                     <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2" htmlFor="full_name">Nome Completo</label>
                     <input 

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { formatBRL } from '@/lib/utils';
@@ -21,7 +22,8 @@ import {
   Eye,
   EyeOff,
   Edit2,
-  Upload
+  Upload,
+  Camera
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -264,8 +266,12 @@ export default function PainelAssociado() {
         <aside className="w-full lg:w-64 flex-shrink-0">
           <div className="bg-white rounded-2xl border border-outline-variant p-4 shadow-sm">
             <div className="flex items-center gap-3 px-3 py-4 border-b border-outline-variant mb-4">
-              <div className="w-12 h-12 bg-primary-container rounded-full flex items-center justify-center text-primary font-bold text-xl uppercase">
-                {profile?.full_name?.[0] || user.email?.[0] || 'U'}
+              <div className="w-12 h-12 bg-primary-container rounded-full flex items-center justify-center text-primary font-bold text-xl uppercase overflow-hidden relative">
+                {profile?.photo_url ? (
+                  <Image fill src={profile.photo_url} alt="Foto" className="object-cover" />
+                ) : (
+                  profile?.full_name?.[0] || user.email?.[0] || 'U'
+                )}
               </div>
               <div className="overflow-hidden">
                 <p className="font-bold text-on-surface truncate">{profile?.popular_name || profile?.full_name || 'Usuário'}</p>
@@ -471,6 +477,50 @@ export default function PainelAssociado() {
                         <div className="relative">
                           <input className="w-full rounded-xl border border-outline bg-gray-50 py-3 px-4 text-on-surface-variant cursor-not-allowed outline-none" value={user.email || ''} readOnly />
                           <Lock className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant opacity-40" />
+                        </div>
+                      </div>
+                      <div className="md:col-span-2 p-6 bg-surface-container rounded-2xl border border-outline-variant flex flex-col md:flex-row items-center gap-6">
+                        <div className="w-24 h-24 rounded-full bg-white border-4 border-white shadow-md relative overflow-hidden group">
+                          {profile?.photo_url ? (
+                            <Image fill src={profile.photo_url} alt="Foto" className="object-cover" />
+                          ) : (
+                            <User className="w-12 h-12 text-outline absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+                          )}
+                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                            <Camera className="text-white w-8 h-8" />
+                          </div>
+                          <input 
+                            type="file" 
+                            className="absolute inset-0 opacity-0 cursor-pointer" 
+                            accept="image/*"
+                            onChange={async (e) => {
+                              const file = e.target.files?.[0];
+                              if (!file || !user) return;
+                              setLoading(true);
+                              try {
+                                const fileExt = file.name.split('.').pop();
+                                const fileName = `${user.id}-${Date.now()}-${Math.floor(Math.random() * 1000)}.${fileExt}`;
+                                const filePath = `${user.id}/${fileName}`;
+                                const { error: uploadError } = await supabase.storage.from('avatars').upload(filePath, file);
+                                if (uploadError) throw uploadError;
+                                const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(filePath);
+                                const { error: dbError } = await supabase.from('associados').update({ photo_url: publicUrl }).eq('user_id', user.id);
+                                if (dbError) throw dbError;
+                                setSuccessMsg('Foto atualizada com sucesso!');
+                                window.location.reload();
+                              } catch (err: any) {
+                                console.error(err);
+                                setErrorMsg(err.message || 'Erro ao atualizar foto.');
+                              } finally {
+                                setLoading(false);
+                              }
+                            }}
+                          />
+                        </div>
+                        <div className="text-center md:text-left">
+                          <h4 className="font-bold text-on-surface uppercase">Foto do Perfil</h4>
+                          <p className="text-sm text-on-surface-variant mb-2">Clique na imagem ao lado para alterar sua foto.</p>
+                          <p className="text-[10px] text-primary font-bold uppercase tracking-tighter bg-primary/10 px-2 py-0.5 rounded inline-block">Formatos: JPG, PNG • Max: 5MB</p>
                         </div>
                       </div>
                       <div>

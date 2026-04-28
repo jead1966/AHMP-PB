@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { User, Camera, Edit2, Activity, UserSquare, CheckCircle2, AlertCircle, Eye, EyeOff, Loader2 } from 'lucide-react';
@@ -13,8 +13,43 @@ export default function Cadastro() {
   const [errorMessage, setErrorMessage] = useState('');
   const [birthDate, setBirthDate] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const router = useRouter();
-  const [authChecked, setAuthChecked] = useState(false);
+
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setPhotoFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPhotoPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const uploadPhoto = useCallback(async (userId: string) => {
+    if (!photoFile) return null;
+    const fileExt = photoFile.name.split('.').pop();
+    const fileName = `${userId}-${Date.now()}-${Math.floor(Math.random() * 1000)}.${fileExt}`;
+    const filePath = `${userId}/${fileName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('avatars')
+      .upload(filePath, photoFile);
+
+    if (uploadError) {
+      console.error('Erro no upload da foto:', uploadError);
+      return null;
+    }
+
+    const { data: { publicUrl } } = supabase.storage
+      .from('avatars')
+      .getPublicUrl(filePath);
+
+    return publicUrl;
+  }, [photoFile]);
 
   // Clean stale session if user is logged in but has no profile
   // or redirect to panel if they are already fully registered
@@ -80,7 +115,10 @@ export default function Cadastro() {
       if (authError) throw authError;
       if (!authData.user) throw new Error('Falha ao criar usuário.');
 
-      // 2. Store in Database
+      // 2. Upload Photo if selected
+      const photoUrl = await uploadPhoto(authData.user.id);
+
+      // 3. Store in Database
       const associadoData = {
         full_name: fullName,
         popular_name: formData.get('popularName'),
@@ -94,6 +132,7 @@ export default function Cadastro() {
         position: formData.get('position'),
         club: formData.get('club'),
         user_id: authData.user.id,
+        photo_url: photoUrl,
         status: 'pendente',
       };
 
@@ -170,10 +209,16 @@ export default function Cadastro() {
         <form className="space-y-8 mt-8" onSubmit={handleSubmit}>
           {/* Photo Upload */}
           <div className="flex flex-col items-center justify-center pb-6 border-b border-outline-variant/30">
-            <div className="relative group cursor-pointer">
+            <div className="relative group cursor-pointer" onClick={() => document.getElementById('photoInput')?.click()}>
               <div className="w-32 h-32 rounded-full overflow-hidden bg-surface-container flex items-center justify-center border-4 border-surface-container-lowest shadow-md relative">
-                <User className="text-4xl text-outline w-12 h-12 absolute z-0" />
-                <Image fill src="https://lh3.googleusercontent.com/aida-public/AB6AXuAuATgXfSLnQxQj-2GNUYKkQLpgQZmP56DdhvUgDbW0BtnXgGr9akJCSmVVTQCF9SKOuesL682Ur5C6WCRp7n_tNkoEU6FfC6p9PR6Zsh88p4hKwj-8xgVNSuoQoY4Gb8tL86Qgi-mPGqA72m2jJ3r4WbJjNNlyU9TXBwHfoxLqD946OaD4qen_CSepBpKo-Da9Q_ICpnWA2hlHHR1coFY-TYRYPxg2QTSP9vmNVmXQrOqd4_3eU7S5zaCevstLsGEUMNg409S7_Ow" alt="Athlete Placeholder" className="object-cover opacity-50 group-hover:opacity-30 transition-opacity z-10" referrerPolicy="no-referrer" />
+                {photoPreview ? (
+                  <Image fill src={photoPreview} alt="Preview" className="object-cover" />
+                ) : (
+                  <>
+                    <User className="text-4xl text-outline w-12 h-12 absolute z-0" />
+                    <Image fill src="https://lh3.googleusercontent.com/aida-public/AB6AXuAuATgXfSLnQxQj-2GNUYKkQLpgQZmP56DdhvUgDbW0BtnXgGr9akJCSmVVTQCF9SKOuesL682Ur5C6WCRp7n_tNkoEU6FfC6p9PR6Zsh88p4hKwj-8xgVNSuoQoY4Gb8tL86Qgi-mPGqA72m2jJ3r4WbJjNNlyU9TXBwHfoxLqD946OaD4qen_CSepBpKo-Da9Q_ICpnWA2hlHHR1coFY-TYRYPxg2QTSP9vmNVmXQrOqd4_3eU7S5zaCevstLsGEUMNg409S7_Ow" alt="Athlete Placeholder" className="object-cover opacity-50 group-hover:opacity-30 transition-opacity z-10" referrerPolicy="no-referrer" />
+                  </>
+                )}
               </div>
               <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-20">
                 <Camera className="text-white text-3xl drop-shadow-md w-8 h-8" />
@@ -182,7 +227,20 @@ export default function Cadastro() {
                 <Edit2 className="w-4 h-4" />
               </div>
             </div>
-            <button className="mt-4 font-label-bold text-label-bold text-primary hover:text-secondary-container transition-colors" type="button">Enviar Foto do Atleta</button>
+            <input 
+              type="file" 
+              id="photoInput" 
+              className="hidden" 
+              accept="image/*" 
+              onChange={handlePhotoChange} 
+            />
+            <button 
+              className="mt-4 font-label-bold text-label-bold text-primary hover:text-secondary-container transition-colors" 
+              type="button"
+              onClick={() => document.getElementById('photoInput')?.click()}
+            >
+              {photoFile ? 'Alterar Foto' : 'Enviar Foto do Atleta'}
+            </button>
           </div>
 
           {/* Personal Data */}
