@@ -196,8 +196,7 @@ export default function AdminDashboard() {
       const { error } = await supabase
         .from('mensalidades')
         .update({ 
-          status: 'pendente',
-          receipt_url: null 
+          status: 'pendente'
         })
         .eq('id', id);
 
@@ -235,8 +234,7 @@ export default function AdminDashboard() {
           .update({
             status: 'paga',
             payment_date: new Date().toISOString().split('T')[0],
-            amount: paymentForm.amount,
-            receipt_url: null // Clear any pending receipt if manually paid
+            amount: paymentForm.amount
           })
           .eq('id', existing.id);
         
@@ -267,9 +265,10 @@ export default function AdminDashboard() {
       });
       await fetchData(true);
       alert('Pagamento registrado com sucesso!');
-    } catch (err) {
-      console.error(err);
-      alert('Erro ao registrar pagamento.');
+    } catch (err: any) {
+      console.error("ERRO COMPLETO AO REGISTRAR:", err);
+      const errorMessage = err.message || err.details || 'Erro desconhecido';
+      alert(`Erro ao registrar pagamento: ${errorMessage}`);
     } finally {
       setActionLoading(null);
     }
@@ -930,9 +929,7 @@ export default function AdminDashboard() {
                                   <td className="px-6 py-4 text-sm text-slate-500 text-right font-medium">
                                     <div className="flex flex-col items-end">
                                       <span>{m.payment_date ? new Date(m.payment_date).toLocaleDateString('pt-BR') : '-'}</span>
-                                      {m.receipt_url && (
-                                        <a href={m.receipt_url} target="_blank" rel="noreferrer" className="text-[10px] text-blue-500 hover:underline">Ver Comprovante Anexado</a>
-                                      )}
+                                      {/* No receipt_url in schema */}
                                     </div>
                                   </td>
                                 </tr>

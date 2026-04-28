@@ -131,7 +131,7 @@ export default function PainelAssociado() {
       // 3. Update mensalidade record
       const { error: updateError } = await supabase
         .from('mensalidades')
-        .update({ receipt_url: publicUrl, status: 'em_analise' })
+        .update({ status: 'em_analise' })
         .eq('id', mensalidadeId);
 
       if (updateError) throw updateError;
