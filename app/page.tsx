@@ -46,6 +46,8 @@ export default function Home() {
     }
   };
 
+  const featuredInterview = noticias.find(n => n.category === 'Entrevista');
+
   return (
     <main className="flex-grow pt-16">
       {/* Seção Hero */}
@@ -120,16 +122,16 @@ export default function Home() {
                     </div>
                   ))}
 
-                {/* Exemplo de card de entrevista se houver uma notícia na categoria entrevista */}
-                {noticias.find(n => n.category === 'Entrevista') && (
+                {/* Entrevista em Destaque (apenas se não estiver entre as 3 principais) */}
+                {featuredInterview && !noticias.slice(0, 3).some(n => n.id === featuredInterview.id) && (
                   <div 
-                    onClick={() => setSelectedNews(noticias.find(n => n.category === 'Entrevista'))}
+                    onClick={() => setSelectedNews(featuredInterview)}
                     className="md:col-span-3 bg-surface rounded-lg border border-outline-variant overflow-hidden hover:border-primary-container transition-all shadow-sm flex flex-col md:flex-row group cursor-pointer mt-2"
                   >
                     <div className="w-full md:w-[300px] h-64 md:h-full relative overflow-hidden flex-shrink-0">
                       <Image 
                         fill 
-                        src={noticias.find(n => n.category === 'Entrevista').image_url} 
+                        src={featuredInterview.image_url} 
                         alt="Entrevista" 
                         className="object-cover transition-transform duration-500 group-hover:scale-105" 
                         referrerPolicy="no-referrer" 
@@ -137,9 +139,9 @@ export default function Home() {
                       <div className="absolute top-4 left-4 bg-primary text-on-primary text-xs px-2 py-1 rounded font-label-bold z-10 shadow-sm">Entrevista em Destaque</div>
                     </div>
                     <div className="p-6 md:p-8 flex-grow flex flex-col justify-center">
-                      <h3 className="font-headline-md text-headline-md text-primary mb-1">{noticias.find(n => n.category === 'Entrevista').title}</h3>
+                      <h3 className="font-headline-md text-headline-md text-primary mb-1">{featuredInterview.title}</h3>
                       <p className="font-body-md text-on-surface line-clamp-3 italic mb-6">
-                        &quot;{noticias.find(n => n.category === 'Entrevista').description}&quot;
+                        &quot;{featuredInterview.description}&quot;
                       </p>
                       <button className="inline-flex items-center gap-2 font-label-bold text-label-bold text-primary hover:text-secondary-container transition-colors mt-auto text-left">
                         Ver Mais <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
