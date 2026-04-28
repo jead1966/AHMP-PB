@@ -32,12 +32,12 @@ export default function Cadastro() {
   const uploadPhoto = useCallback(async (userId: string) => {
     if (!photoFile) return null;
     const fileExt = photoFile.name.split('.').pop();
-    const fileName = `${userId}-${Date.now()}-${Math.floor(Math.random() * 1000)}.${fileExt}`;
-    const filePath = `${userId}/${fileName}`;
+    const fileName = `${userId}-${Date.now()}.${fileExt}`;
+    const filePath = fileName;
 
     const { error: uploadError } = await supabase.storage
       .from('avatars')
-      .upload(filePath, photoFile);
+      .upload(filePath, photoFile, { upsert: true });
 
     if (uploadError) {
       console.error('Erro no upload da foto:', uploadError);

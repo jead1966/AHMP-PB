@@ -499,17 +499,28 @@ export default function PainelAssociado() {
                               setLoading(true);
                               try {
                                 const fileExt = file.name.split('.').pop();
-                                const fileName = `${user.id}-${Date.now()}-${Math.floor(Math.random() * 1000)}.${fileExt}`;
-                                const filePath = `${user.id}/${fileName}`;
-                                const { error: uploadError } = await supabase.storage.from('avatars').upload(filePath, file);
+                                const fileName = `${user.id}-${Date.now()}.${fileExt}`;
+                                const filePath = fileName;
+                                const { error: uploadError } = await supabase.storage
+                                  .from('avatars')
+                                  .upload(filePath, file, { upsert: true });
+                                
                                 if (uploadError) throw uploadError;
-                                const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(filePath);
-                                const { error: dbError } = await supabase.from('associados').update({ photo_url: publicUrl }).eq('user_id', user.id);
+                                
+                                const { data: { publicUrl } } = supabase.storage
+                                  .from('avatars')
+                                  .getPublicUrl(filePath);
+                                
+                                const { error: dbError } = await supabase
+                                  .from('associados')
+                                  .update({ photo_url: publicUrl })
+                                  .eq('user_id', user.id);
+                                
                                 if (dbError) throw dbError;
                                 setSuccessMsg('Foto atualizada com sucesso!');
-                                window.location.reload();
+                                setTimeout(() => window.location.reload(), 1000);
                               } catch (err: any) {
-                                console.error(err);
+                                console.error('Erro detalhado:', err);
                                 setErrorMsg(err.message || 'Erro ao atualizar foto.');
                               } finally {
                                 setLoading(false);

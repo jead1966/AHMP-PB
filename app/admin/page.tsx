@@ -1378,9 +1378,15 @@ export default function AdminDashboard() {
                           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                             {noticias.filter(n => n.category !== 'Entrevista').map(n => (
                               <div key={n.id} className="border border-slate-200 rounded-xl overflow-hidden group hover:shadow-md transition-all">
-                                <div className="h-32 relative bg-slate-100">
-                                  {n.image_url && <img src={n.image_url} alt="" className="w-full h-full object-cover" />}
-                                  <div className="absolute top-2 left-2 bg-blue-600 text-white text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-wider">{n.category}</div>
+                                <div className="h-32 relative bg-slate-100 overflow-hidden">
+                                  {n.image_url ? (
+                                    <Image fill src={n.image_url} alt="" className="object-cover" />
+                                  ) : (
+                                    <div className="w-full h-full flex items-center justify-center text-slate-300">
+                                      <Newspaper className="w-8 h-8" />
+                                    </div>
+                                  )}
+                                  <div className="absolute top-2 left-2 bg-blue-600 text-white text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-wider z-10">{n.category}</div>
                                 </div>
                                 <div className="p-4">
                                   <h4 className="font-bold text-slate-800 line-clamp-1">{n.title}</h4>
@@ -1416,9 +1422,15 @@ export default function AdminDashboard() {
                           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                             {noticias.filter(n => n.category === 'Entrevista').map(n => (
                               <div key={n.id} className="border border-slate-200 rounded-xl overflow-hidden group hover:shadow-md transition-all">
-                                <div className="h-40 relative bg-slate-100">
-                                  {n.image_url && <img src={n.image_url} alt="" className="w-full h-full object-cover" />}
-                                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-bottom p-4">
+                                <div className="h-40 relative bg-slate-100 overflow-hidden">
+                                  {n.image_url ? (
+                                    <Image fill src={n.image_url} alt="" className="object-cover" />
+                                  ) : (
+                                    <div className="w-full h-full flex items-center justify-center text-slate-300">
+                                      <Users className="w-8 h-8" />
+                                    </div>
+                                  )}
+                                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-bottom p-4 z-10">
                                     <h4 className="text-white font-bold self-end line-clamp-1">{n.title}</h4>
                                   </div>
                                 </div>
@@ -1462,9 +1474,15 @@ export default function AdminDashboard() {
                           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                             {videos.map(v => (
                               <div key={v.id} className="border border-slate-200 rounded-xl overflow-hidden group hover:shadow-md transition-all">
-                                <div className="aspect-video relative bg-black flex items-center justify-center">
-                                  {v.thumbnail_url && <img src={v.thumbnail_url} alt="" className="w-full h-full object-cover opacity-60" />}
-                                  <Video className="absolute w-8 h-8 text-white opacity-40 group-hover:opacity-100 transition-all" />
+                                <div className="aspect-video relative bg-black flex items-center justify-center overflow-hidden">
+                                  {v.thumbnail_url ? (
+                                    <Image fill src={v.thumbnail_url} alt="" className="object-cover opacity-60" />
+                                  ) : (
+                                    <div className="w-full h-full flex items-center justify-center text-slate-300 opacity-20">
+                                      <Video className="w-12 h-12" />
+                                    </div>
+                                  )}
+                                  <Video className="absolute w-8 h-8 text-white opacity-40 group-hover:opacity-100 transition-all z-10" />
                                 </div>
                                 <div className="p-4">
                                   <h4 className="font-bold text-slate-800 line-clamp-1">{v.title}</h4>
