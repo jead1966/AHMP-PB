@@ -211,7 +211,7 @@ export default function Cadastro() {
             <div className="relative group cursor-pointer" onClick={() => document.getElementById('photoInput')?.click()}>
               <div className="w-32 h-32 rounded-full overflow-hidden bg-surface-container flex items-center justify-center border-4 border-surface-container-lowest shadow-md relative">
                 {photoPreview ? (
-                  <Image fill src={photoPreview} alt="Preview" className="object-cover" />
+                  <Image fill src={photoPreview} alt="Preview" className="object-cover" referrerPolicy="no-referrer" />
                 ) : (
                   <>
                     <User className="text-4xl text-outline w-12 h-12 absolute z-0" />

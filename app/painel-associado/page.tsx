@@ -268,7 +268,7 @@ export default function PainelAssociado() {
             <div className="flex items-center gap-3 px-3 py-4 border-b border-outline-variant mb-4">
               <div className="w-12 h-12 bg-primary-container rounded-full flex items-center justify-center text-primary font-bold text-xl uppercase overflow-hidden relative">
                 {profile?.photo_url ? (
-                  <Image fill src={profile.photo_url} alt="Foto" className="object-cover" />
+                  <Image fill src={`${profile.photo_url}?t=${new Date().getTime()}`} alt="Foto" className="object-cover" referrerPolicy="no-referrer" />
                 ) : (
                   profile?.full_name?.[0] || user.email?.[0] || 'U'
                 )}
@@ -482,7 +482,7 @@ export default function PainelAssociado() {
                       <div className="md:col-span-2 p-6 bg-surface-container rounded-2xl border border-outline-variant flex flex-col md:flex-row items-center gap-6">
                         <div className="w-24 h-24 rounded-full bg-white border-4 border-white shadow-md relative overflow-hidden group">
                           {profile?.photo_url ? (
-                            <Image fill src={profile.photo_url} alt="Foto" className="object-cover" />
+                            <Image fill src={`${profile.photo_url}?t=${new Date().getTime()}`} alt="Foto" className="object-cover" referrerPolicy="no-referrer" />
                           ) : (
                             <User className="w-12 h-12 text-outline absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
                           )}

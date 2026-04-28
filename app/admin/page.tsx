@@ -1122,7 +1122,7 @@ export default function AdminDashboard() {
                                   <div className="flex items-center gap-3">
                                     <div className="w-10 h-10 rounded-full bg-slate-200 flex flex-shrink-0 items-center justify-center text-slate-500 font-bold text-sm uppercase overflow-hidden relative">
                                       {a.photo_url ? (
-                                        <Image fill src={a.photo_url} alt="" className="object-cover" />
+                                        <Image fill src={`${a.photo_url}?t=${new Date().getTime()}`} alt="" className="object-cover" referrerPolicy="no-referrer" />
                                       ) : (
                                         a.full_name?.charAt(0) || '?'
                                       )}
@@ -1380,7 +1380,7 @@ export default function AdminDashboard() {
                               <div key={n.id} className="border border-slate-200 rounded-xl overflow-hidden group hover:shadow-md transition-all">
                                 <div className="h-32 relative bg-slate-100 overflow-hidden">
                                   {n.image_url ? (
-                                    <Image fill src={n.image_url} alt="" className="object-cover" />
+                                    <Image fill src={n.image_url} alt="" className="object-cover" referrerPolicy="no-referrer" />
                                   ) : (
                                     <div className="w-full h-full flex items-center justify-center text-slate-300">
                                       <Newspaper className="w-8 h-8" />
@@ -1424,7 +1424,7 @@ export default function AdminDashboard() {
                               <div key={n.id} className="border border-slate-200 rounded-xl overflow-hidden group hover:shadow-md transition-all">
                                 <div className="h-40 relative bg-slate-100 overflow-hidden">
                                   {n.image_url ? (
-                                    <Image fill src={n.image_url} alt="" className="object-cover" />
+                                    <Image fill src={n.image_url} alt="" className="object-cover" referrerPolicy="no-referrer" />
                                   ) : (
                                     <div className="w-full h-full flex items-center justify-center text-slate-300">
                                       <Users className="w-8 h-8" />
@@ -1476,7 +1476,7 @@ export default function AdminDashboard() {
                               <div key={v.id} className="border border-slate-200 rounded-xl overflow-hidden group hover:shadow-md transition-all">
                                 <div className="aspect-video relative bg-black flex items-center justify-center overflow-hidden">
                                   {v.thumbnail_url ? (
-                                    <Image fill src={v.thumbnail_url} alt="" className="object-cover opacity-60" />
+                                    <Image fill src={v.thumbnail_url} alt="" className="object-cover opacity-60" referrerPolicy="no-referrer" />
                                   ) : (
                                     <div className="w-full h-full flex items-center justify-center text-slate-300 opacity-20">
                                       <Video className="w-12 h-12" />
