@@ -99,6 +99,8 @@ export default function Cadastro() {
     const password = formData.get('password') as string;
     const fullName = formData.get('fullName') as string;
 
+    let authDataResult: any = null;
+
     try {
       // 1. Create Auth User
       const { data: authData, error: authError } = await supabase.auth.signUp({
@@ -113,6 +115,7 @@ export default function Cadastro() {
 
       if (authError) throw authError;
       if (!authData.user) throw new Error('Falha ao criar usuário.');
+      authDataResult = authData;
 
       // 2. Upload Photo if selected
       const photoUrl = await uploadPhoto(authData.user.id);
@@ -157,8 +160,8 @@ export default function Cadastro() {
       if (msg.includes('row-level security policy')) {
         msg = 'Erro de permissão no banco de dados. Por favor, tente novamente ou entre em contato com o suporte se o erro persistir.';
         console.error('RLS Violation during registration:', {
-          userId: authData?.user?.id,
-          hasSession: !!authData?.session
+          userId: authDataResult?.user?.id,
+          hasSession: !!authDataResult?.session
         });
       } else if (msg.includes('already registered')) {
         msg = 'Opa! Esse e-mail já foi cadastrado anteriormente em nosso sistema. Você não precisa se cadastrar novamente. Por favor, vá para a tela de login e entre com sua senha.';
