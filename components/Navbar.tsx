@@ -210,23 +210,34 @@ export function Navbar() {
               Contato
             </Link>
             <div className="h-px bg-slate-100 my-2"></div>
-            {!user && (
+            {user ? (
               <Link
-                href="/cadastro"
+                href="/painel-associado"
                 onClick={closeMobileMenu}
-                className="bg-orange-500 text-white p-4 rounded-xl font-bold text-base text-center transition-all shadow-sm active:scale-[0.98]"
+                className="flex items-center justify-center gap-3 bg-orange-500 text-white p-4 rounded-xl font-bold text-base transition-all shadow-sm active:scale-[0.98]"
               >
-                Seja Sócio
+                <LayoutDashboard className="w-5 h-5" />
+                Minha Área
               </Link>
+            ) : (
+              <>
+                <Link
+                  href="/cadastro"
+                  onClick={closeMobileMenu}
+                  className="bg-orange-500 text-white p-4 rounded-xl font-bold text-base text-center transition-all shadow-sm active:scale-[0.98]"
+                >
+                  Seja Sócio
+                </Link>
+                <Link
+                  href="/login"
+                  onClick={closeMobileMenu}
+                  className="flex items-center justify-center gap-3 border-2 border-slate-200 text-slate-700 p-4 rounded-xl font-bold text-base transition-all hover:bg-slate-50"
+                >
+                  <User className="w-5 h-5" />
+                  Acesso Sócio
+                </Link>
+              </>
             )}
-            <Link
-              href="/login"
-              onClick={closeMobileMenu}
-              className="flex items-center justify-center gap-3 border-2 border-slate-200 text-slate-700 p-4 rounded-xl font-bold text-base transition-all hover:bg-slate-50"
-            >
-              <User className="w-5 h-5" />
-              Acesso Sócio
-            </Link>
           </nav>
         </div>
       )}

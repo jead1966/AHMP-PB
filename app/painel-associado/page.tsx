@@ -69,7 +69,7 @@ export default function PainelAssociado() {
 
   useEffect(() => {
     if (profile) {
-      // eslint-disable-next-line
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setFormProfile({
         full_name: profile.full_name || '',
         popular_name: profile.popular_name || '',
@@ -85,9 +85,13 @@ export default function PainelAssociado() {
   }, [profile]);
 
   const fetchMensalidades = useCallback(async (silent = false) => {
-    if (!user) return;
+    if (!user) {
+      console.warn('fetchMensalidades: no user');
+      return;
+    }
     if (!silent) setLoading(true);
     try {
+      console.log('Fetching mensalidades for:', user.id);
       const { data, error } = await supabase
         .from('mensalidades')
         .select('*')
@@ -95,7 +99,11 @@ export default function PainelAssociado() {
         .order('year', { ascending: false })
         .order('month', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching mensalidades:', error);
+        throw error;
+      }
+      console.log('Mensalidades fetched:', data?.length);
       setMensalidades(data || []);
     } catch (err) {
       console.error('Erro ao buscar mensalidades:', err);
@@ -259,12 +267,12 @@ export default function PainelAssociado() {
   ];
 
   return (
-    <main className="min-h-screen bg-surface-container-lowest pt-28 pb-12 px- gutter-padding">
+    <main className="min-h-screen bg-surface-container-lowest pt-28 pb-12 px-4 sm:px-6">
       <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-8">
         
         {/* Sidebar */}
         <aside className="w-full lg:w-64 flex-shrink-0">
-          <div className="bg-white rounded-2xl border border-outline-variant p-4 shadow-sm">
+          <div className="bg-white rounded-2xl border border-outline-variant p-4 shadow-sm sticky top-28">
             <div className="flex items-center gap-3 px-3 py-4 border-b border-outline-variant mb-4">
               <div className="w-12 h-12 bg-primary-container rounded-full flex items-center justify-center text-primary font-bold text-xl uppercase overflow-hidden relative">
                 {profile?.photo_url ? (
@@ -308,6 +316,21 @@ export default function PainelAssociado() {
 
         {/* Content */}
         <div className="flex-grow">
+          {!authLoading && user && !profile && (
+            <div className="mb-8 p-6 bg-orange-50 border-2 border-orange-200 rounded-2xl text-orange-800 flex items-start gap-4 shadow-sm">
+              <AlertCircle className="w-6 h-6 flex-shrink-0 mt-1" />
+              <div>
+                <h3 className="font-bold text-lg mb-1">Atenção: Perfil não encontrado</h3>
+                <p className="text-sm">Identificamos que sua conta está logada, mas não encontramos seus dados de associado. Isso pode ocorrer se o cadastro não foi finalizado. Por favor, tente sair e entrar novamente ou contate a administração.</p>
+                <button 
+                  onClick={() => window.location.reload()}
+                  className="mt-4 px-4 py-2 bg-orange-600 text-white rounded-lg text-xs font-bold uppercase hover:bg-orange-700 transition-colors"
+                >
+                  Recarregar Página
+                </button>
+              </div>
+            </div>
+          )}
           <AnimatePresence mode="wait">
             <motion.div
               key={activeTab}
