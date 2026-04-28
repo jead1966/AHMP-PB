@@ -14,7 +14,7 @@ export function useAuth() {
       setUser(session?.user ?? null);
       
       if (session?.user) {
-        const { data } = await supabase
+        const { data, error } = await supabase
           .from('associados')
           .select('*')
           .eq('user_id', session.user.id)
