@@ -223,7 +223,13 @@ export default function Home() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {videos.length > 0 ? (
             videos.slice(0, 2).map((vid) => (
-              <div key={vid.id} className="relative rounded-lg overflow-hidden group cursor-pointer aspect-video bg-black shadow-md border border-outline-variant">
+              <Link 
+                key={vid.id} 
+                href={vid.video_url || "#"} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="relative rounded-lg overflow-hidden group cursor-pointer aspect-video bg-black shadow-md border border-outline-variant block"
+              >
                 <Image 
                   fill 
                   src={vid.thumbnail_url || "https://images.unsplash.com/photo-1510051646601-996027be280b?auto=format&fit=crop&q=80"} 
@@ -240,7 +246,7 @@ export default function Home() {
                   <span className="bg-primary/80 text-on-primary text-[10px] px-2 py-0.5 rounded font-bold mb-2 inline-block backdrop-blur-sm uppercase tracking-wide">{vid.category}</span>
                   <h3 className="font-bold text-lg md:text-xl">{vid.title}</h3>
                 </div>
-              </div>
+              </Link>
             ))
           ) : (
             <div className="col-span-2 bg-white/50 border border-dashed border-slate-200 rounded-xl py-12 text-center text-slate-400">
