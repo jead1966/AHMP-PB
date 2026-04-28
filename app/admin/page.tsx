@@ -25,11 +25,17 @@ import {
   Shield,
   Trash2,
   Edit2,
-  Key
+  Key,
+  Video,
+  Newspaper,
+  Trophy as TrophyIcon,
+  Layout,
+  Activity,
+  Medal
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-type Tab = 'dashboard' | 'associados' | 'mensalidades' | 'usuarios';
+type Tab = 'dashboard' | 'associados' | 'mensalidades' | 'usuarios' | 'conteudo';
 
 export default function AdminDashboard() {
   const { user, profile, loading: authLoading } = useAuth();
@@ -45,6 +51,9 @@ export default function AdminDashboard() {
   const [associados, setAssociados] = useState<any[]>([]);
   const [mensalidades, setMensalidades] = useState<any[]>([]);
   const [usuarios, setUsuarios] = useState<any[]>([]);
+  const [noticias, setNoticias] = useState<any[]>([]);
+  const [videos, setVideos] = useState<any[]>([]);
+  const [competicoes, setCompeticoes] = useState<any[]>([]);
   const [loadingData, setLoadingData] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   
@@ -62,6 +71,50 @@ export default function AdminDashboard() {
   const [searchAssociados, setSearchAssociados] = useState('');
   const [searchMensalidades, setSearchMensalidades] = useState('');
   const [searchUsuarios, setSearchUsuarios] = useState('');
+  const [activeContentTab, setActiveContentTab] = useState<'noticias' | 'entrevistas' | 'videos' | 'competicoes'>('noticias');
+
+  // News Form states
+  const [showNewsModal, setShowNewsModal] = useState(false);
+  const [editingNews, setEditingNews] = useState<any>(null);
+  const [newsForm, setNewsForm] = useState({
+    title: '',
+    image_url: '',
+    category: 'Geral',
+    date: new Date().toISOString().split('T')[0],
+    content: ''
+  });
+
+  // Interview Form states
+  const [showInterviewModal, setShowInterviewModal] = useState(false);
+  const [editingInterview, setEditingInterview] = useState<any>(null);
+  const [interviewForm, setInterviewForm] = useState({
+    title: '',
+    personality_name: '',
+    image_url: '',
+    date: new Date().toISOString().split('T')[0],
+    content: ''
+  });
+
+  // Video Form states
+  const [showVideoModal, setShowVideoModal] = useState(false);
+  const [editingVideo, setEditingVideo] = useState<any>(null);
+  const [videoForm, setVideoForm] = useState({
+    title: '',
+    video_url: '',
+    thumbnail_url: '',
+    category: 'Show'
+  });
+
+  // Competições Form states
+  const [showCompModal, setShowCompModal] = useState(false);
+  const [editingComp, setEditingComp] = useState<any>(null);
+  const [compForm, setCompForm] = useState({
+    title: '',
+    description: '',
+    icon_type: 'Trophy',
+    status: 'Andamento',
+    link_url: '#'
+  });
 
   // Associado Form states
   const [showAssociadoModal, setShowAssociadoModal] = useState(false);
@@ -139,10 +192,52 @@ export default function AdminDashboard() {
       if (userError) throw userError;
       setUsuarios(userData || []);
 
+      // Fetch news
+      const { data: newsData, error: newsFetchError } = await supabase
+        .from('noticias')
+        .select('*')
+        .order('date', { ascending: false });
+      
+      if (newsFetchError) {
+        console.error('Erro ao buscar notícias:', newsFetchError);
+        if (newsFetchError.code === '42P01') {
+          console.warn('A tabela "noticias" não existe no banco de dados.');
+        }
+      }
+      setNoticias(newsData || []);
+
+      // Fetch videos
+      const { data: videosData, error: videosFetchError } = await supabase
+        .from('videos')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (videosFetchError) {
+        console.error('Erro ao buscar vídeos:', videosFetchError);
+      }
+      setVideos(videosData || []);
+
+      // Fetch competitions
+      const { data: compsData, error: compsFetchError } = await supabase
+        .from('competicoes')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (compsFetchError) {
+        console.error('Erro ao buscar competições:', compsFetchError);
+      }
+      setCompeticoes(compsData || []);
+
     } catch (err: any) {
       console.error('Erro ao buscar dados dashboard admin:', err);
       if (!silent) {
-        alert('Erro ao carregar dados do banco de dados. Verifique a conexão ou permissões RLS.');
+        let message = 'Erro ao carregar dados do banco de dados.';
+        if (err.code === '42P01') {
+          message = 'Erro: Algumas tabelas do sistema estão faltando no banco de dados. Contate o administrador para rodar os scripts SQL necessários.';
+        } else if (err.code === '42501') {
+          message = 'Erro: Permissão negada no banco de dados. Verifique as regras de RLS.';
+        }
+        alert(message);
       }
     } finally {
       setLoadingData(false);
@@ -401,6 +496,284 @@ export default function AdminDashboard() {
     }
   };
 
+  const saveNoticia = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setActionLoading('save_news');
+    try {
+      const payload = {
+        ...newsForm,
+        description: newsForm.content.substring(0, 150) + (newsForm.content.length > 150 ? '...' : '')
+      };
+
+      if (editingNews) {
+        const { error } = await supabase
+          .from('noticias')
+          .update(payload)
+          .eq('id', editingNews.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('noticias')
+          .insert([payload]);
+        if (error) throw error;
+      }
+      setShowNewsModal(false);
+      setEditingNews(null);
+      await fetchData();
+      alert('Notícia salva com sucesso!');
+    } catch (err: any) {
+      console.error('Erro detalhado ao salvar notícia:', err);
+      let errorMsg = 'Erro ao salvar notícia.';
+      if (err.code === '42P01') {
+        errorMsg = 'A tabela "noticias" não foi encontrada. Verifique se o nome está correto no Supabase.';
+      } else if (err.code === '42501') {
+        errorMsg = 'Erro de Permissão: Verifique se o RLS está desabilitado ou se há políticas de INSERT/UPDATE.';
+      } else {
+        errorMsg = `Erro ${err.code || 'Desconhecido'}: ${err.message || JSON.stringify(err)}`;
+      }
+      alert(errorMsg);
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const deleteNoticia = async (id: string) => {
+    if (!confirm('Deseja excluir esta notícia?')) return;
+    try {
+      const { error } = await supabase.from('noticias').delete().eq('id', id);
+      if (error) throw error;
+      await fetchData();
+    } catch (err: any) {
+      console.error('Erro ao excluir notícia:', err);
+      alert(`Erro ao excluir: ${err.message || 'Verifique sua conexão ou permissões.'}`);
+    }
+  };
+
+  const saveVideo = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setActionLoading('save_video');
+    try {
+      if (editingVideo) {
+        const { error } = await supabase
+          .from('videos')
+          .update(videoForm)
+          .eq('id', editingVideo.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('videos')
+          .insert([videoForm]);
+        if (error) throw error;
+      }
+      setShowVideoModal(false);
+      setEditingVideo(null);
+      await fetchData();
+      alert('Vídeo salvo com sucesso!');
+    } catch (err: any) {
+      console.error('Erro detalhado ao salvar vídeo:', err);
+      let errorMsg = 'Erro ao salvar vídeo.';
+      if (err.code === '42P01') {
+        errorMsg = 'A tabela "videos" não foi encontrada.';
+      } else if (err.code === '42501') {
+        errorMsg = 'Erro de Permissão: Verifique o RLS para a tabela "videos".';
+      } else {
+        errorMsg = `Erro ${err.code || 'Desconhecido'}: ${err.message || JSON.stringify(err)}`;
+      }
+      alert(errorMsg);
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const deleteVideo = async (id: string) => {
+    if (!confirm('Deseja excluir este vídeo?')) return;
+    try {
+      const { error } = await supabase.from('videos').delete().eq('id', id);
+      if (error) throw error;
+      await fetchData();
+    } catch (err: any) {
+      console.error('Erro ao excluir vídeo:', err);
+      alert(`Erro ao excluir: ${err.message || 'Verifique sua conexão ou permissões.'}`);
+    }
+  };
+
+  const saveComp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setActionLoading('save_comp');
+    try {
+      if (editingComp) {
+        const { error } = await supabase
+          .from('competicoes')
+          .update(compForm)
+          .eq('id', editingComp.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('competicoes')
+          .insert([compForm]);
+        if (error) throw error;
+      }
+      setShowCompModal(false);
+      setEditingComp(null);
+      await fetchData();
+      alert('Competição salva!');
+    } catch (err: any) {
+      console.error('Erro detalhado ao salvar competição:', err);
+      let errorMsg = 'Erro ao salvar competição.';
+      if (err.code === '42P01') {
+        errorMsg = 'A tabela "competicoes" não foi encontrada.';
+      } else if (err.code === '42501') {
+        errorMsg = 'Erro de Permissão: Verifique o RLS para a tabela "competicoes".';
+      } else {
+        errorMsg = `Erro ${err.code || 'Desconhecido'}: ${err.message || JSON.stringify(err)}`;
+      }
+      alert(errorMsg);
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const deleteComp = async (id: string) => {
+    if (!confirm('Deseja excluir esta competição?')) return;
+    try {
+      const { error } = await supabase.from('competicoes').delete().eq('id', id);
+      if (error) throw error;
+      await fetchData();
+    } catch (err: any) {
+      console.error('Erro ao excluir competição:', err);
+      alert(`Erro ao excluir: ${err.message || 'Verifique sua conexão ou permissões.'}`);
+    }
+  };
+
+  const openNewsModal = (item = null) => {
+    if (item) {
+      setEditingNews(item);
+      setNewsForm({
+        title: (item as any).title,
+        image_url: (item as any).image_url,
+        category: (item as any).category,
+        date: (item as any).date,
+        content: (item as any).content || ''
+      });
+    } else {
+      setEditingNews(null);
+      setNewsForm({
+        title: '',
+        image_url: 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&q=80',
+        category: 'Campeonato',
+        date: new Date().toISOString().split('T')[0],
+        content: ''
+      });
+    }
+    setShowNewsModal(true);
+  };
+
+  const openInterviewModal = (item = null) => {
+    if (item) {
+      setEditingInterview(item);
+      setInterviewForm({
+        title: (item as any).title,
+        personality_name: (item as any).personality_name || '',
+        image_url: (item as any).image_url,
+        date: (item as any).date,
+        content: (item as any).content || ''
+      });
+    } else {
+      setEditingInterview(null);
+      setInterviewForm({
+        title: '',
+        personality_name: '',
+        image_url: 'https://images.unsplash.com/photo-1510051646601-996027be280b?auto=format&fit=crop&q=80',
+        date: new Date().toISOString().split('T')[0],
+        content: ''
+      });
+    }
+    setShowInterviewModal(true);
+  };
+
+  const saveInterview = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setActionLoading('save_interview');
+    try {
+      // Interviews are stored in 'noticias' table with category 'Entrevista'
+      // We map personality_name to description for storage or just keep it in content
+      const payload = {
+        title: interviewForm.title,
+        description: `Entrevista com ${interviewForm.personality_name}`,
+        image_url: interviewForm.image_url,
+        category: 'Entrevista',
+        date: interviewForm.date,
+        content: interviewForm.content
+      };
+
+      if (editingInterview) {
+        const { error } = await supabase
+          .from('noticias')
+          .update(payload)
+          .eq('id', editingInterview.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('noticias')
+          .insert([payload]);
+        if (error) throw error;
+      }
+      setShowInterviewModal(false);
+      setEditingInterview(null);
+      await fetchData();
+      alert('Entrevista salva com sucesso!');
+    } catch (err: any) {
+      console.error('Erro ao salvar entrevista:', err);
+      alert('Erro ao salvar entrevista: ' + (err.message || err));
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const openVideoModal = (item = null) => {
+    if (item) {
+      setEditingVideo(item);
+      setVideoForm({
+        title: (item as any).title,
+        video_url: (item as any).video_url,
+        thumbnail_url: (item as any).thumbnail_url,
+        category: (item as any).category
+      });
+    } else {
+      setEditingVideo(null);
+      setVideoForm({
+        title: '',
+        video_url: '',
+        thumbnail_url: 'https://images.unsplash.com/photo-1510051646601-996027be280b?auto=format&fit=crop&q=80',
+        category: 'Melhores Momentos'
+      });
+    }
+    setShowVideoModal(true);
+  };
+
+  const openCompModal = (item = null) => {
+    if (item) {
+      setEditingComp(item);
+      setCompForm({
+        title: (item as any).title,
+        description: (item as any).description,
+        icon_type: (item as any).icon_type,
+        status: (item as any).status,
+        link_url: (item as any).link_url
+      });
+    } else {
+      setEditingComp(null);
+      setCompForm({
+        title: '',
+        description: '',
+        icon_type: 'Trophy',
+        status: 'Inscrições Abertas',
+        link_url: '#'
+      });
+    }
+    setShowCompModal(true);
+  };
+
   const saveAssociado = async (e: React.FormEvent) => {
     e.preventDefault();
     setActionLoading('save_associado');
@@ -530,6 +903,7 @@ export default function AdminDashboard() {
     { id: 'associados', label: 'Associados', icon: Users },
     { id: 'mensalidades', label: 'Financeiro', icon: CreditCard },
     { id: 'usuarios', label: 'Usuários Admin', icon: Shield },
+    { id: 'conteudo', label: 'Conteúdo Site', icon: Layout },
   ];
 
   const associadosAtivos = associados.filter(a => a.status === 'ativo').length;
@@ -942,7 +1316,201 @@ export default function AdminDashboard() {
                   </div>
                 )}
 
-                {/* --- TAB: USUÁRIOS ADMIN --- */}
+                {activeTab === 'conteudo' && (
+                  <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col h-[calc(100vh-160px)] min-h-[600px]">
+                    <div className="p-6 border-b border-slate-200 bg-slate-50/50">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div>
+                          <h2 className="text-xl font-bold font-lexend text-slate-800">Gestão de Conteúdo</h2>
+                          <p className="text-sm text-slate-500 mt-1">Atualize as seções do site sem mexer no código.</p>
+                        </div>
+                        <div className="flex bg-slate-200/50 p-1 rounded-lg">
+                          <button 
+                            onClick={() => setActiveContentTab('noticias')}
+                            className={`px-4 py-2 rounded-md text-sm font-bold transition-all ${activeContentTab === 'noticias' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                          >
+                            Notícias
+                          </button>
+                          <button 
+                            onClick={() => setActiveContentTab('entrevistas')}
+                            className={`px-4 py-2 rounded-md text-sm font-bold transition-all ${activeContentTab === 'entrevistas' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                          >
+                            Entrevistas
+                          </button>
+                          <button 
+                            onClick={() => setActiveContentTab('videos')}
+                            className={`px-4 py-2 rounded-md text-sm font-bold transition-all ${activeContentTab === 'videos' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                          >
+                            Vídeos
+                          </button>
+                          <button 
+                            onClick={() => setActiveContentTab('competicoes')}
+                            className={`px-4 py-2 rounded-md text-sm font-bold transition-all ${activeContentTab === 'competicoes' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                          >
+                            Competições
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex-1 overflow-auto p-6">
+                      {activeContentTab === 'noticias' && (
+                        <div className="space-y-4">
+                          <div className="flex justify-between items-center mb-4">
+                            <h3 className="font-bold text-slate-800 flex items-center gap-2">
+                              <Newspaper className="w-5 h-5 text-blue-500" /> Notícias Rápidas
+                            </h3>
+                            <button 
+                              onClick={() => openNewsModal()}
+                              className="px-4 py-2 bg-blue-600 text-white rounded-lg text-xs font-bold hover:bg-blue-700 transition-all flex items-center gap-2"
+                            >
+                              <PlusCircle className="w-4 h-4" /> Nova Notícia
+                            </button>
+                          </div>
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {noticias.filter(n => n.category !== 'Entrevista').map(n => (
+                              <div key={n.id} className="border border-slate-200 rounded-xl overflow-hidden group hover:shadow-md transition-all">
+                                <div className="h-32 relative bg-slate-100">
+                                  {n.image_url && <img src={n.image_url} alt="" className="w-full h-full object-cover" />}
+                                  <div className="absolute top-2 left-2 bg-blue-600 text-white text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-wider">{n.category}</div>
+                                </div>
+                                <div className="p-4">
+                                  <h4 className="font-bold text-slate-800 line-clamp-1">{n.title}</h4>
+                                  <p className="text-xs text-slate-500 line-clamp-2 mt-1">{n.description || n.content?.substring(0, 50) + '...'}</p>
+                                  <div className="flex justify-between items-center mt-4 pt-4 border-t border-slate-100">
+                                    <span className="text-[10px] text-slate-400 font-medium">{new Date(n.date).toLocaleDateString()}</span>
+                                    <div className="flex gap-2">
+                                      <button onClick={() => openNewsModal(n)} className="p-1.5 text-slate-400 hover:text-blue-600 transition-colors"><Edit2 className="w-4 h-4" /></button>
+                                      <button onClick={() => deleteNoticia(n.id)} className="p-1.5 text-slate-400 hover:text-red-600 transition-colors"><Trash2 className="w-4 h-4" /></button>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                            {noticias.filter(n => n.category !== 'Entrevista').length === 0 && <div className="col-span-full py-12 text-center text-slate-400 text-sm">Nenhuma notícia cadastrada.</div>}
+                          </div>
+                        </div>
+                      )}
+
+                      {activeContentTab === 'entrevistas' && (
+                        <div className="space-y-4">
+                          <div className="flex justify-between items-center mb-4">
+                            <h3 className="font-bold text-slate-800 flex items-center gap-2">
+                              <Users className="w-5 h-5 text-emerald-500" /> Personagens do Handebol
+                            </h3>
+                            <button 
+                              onClick={() => openInterviewModal()}
+                              className="px-4 py-2 bg-emerald-600 text-white rounded-lg text-xs font-bold hover:bg-emerald-700 transition-all flex items-center gap-2"
+                            >
+                              <PlusCircle className="w-4 h-4" /> Nova Entrevista
+                            </button>
+                          </div>
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {noticias.filter(n => n.category === 'Entrevista').map(n => (
+                              <div key={n.id} className="border border-slate-200 rounded-xl overflow-hidden group hover:shadow-md transition-all">
+                                <div className="h-40 relative bg-slate-100">
+                                  {n.image_url && <img src={n.image_url} alt="" className="w-full h-full object-cover" />}
+                                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-bottom p-4">
+                                    <h4 className="text-white font-bold self-end line-clamp-1">{n.title}</h4>
+                                  </div>
+                                </div>
+                                <div className="p-4">
+                                  <p className="text-[10px] text-emerald-600 font-black uppercase tracking-widest mb-1 italic">Entrevista Especial</p>
+                                  <p className="text-xs text-slate-500 line-clamp-2">{n.description || 'Personagem do Handebol'}</p>
+                                  <div className="flex justify-between items-center mt-4 pt-4 border-t border-slate-100">
+                                    <span className="text-[10px] text-slate-400 font-medium">{new Date(n.date).toLocaleDateString()}</span>
+                                    <div className="flex gap-2">
+                                      <button onClick={() => openInterviewModal(n)} className="p-1.5 text-slate-400 hover:text-emerald-600 transition-colors"><Edit2 className="w-4 h-4" /></button>
+                                      <button onClick={() => deleteNoticia(n.id)} className="p-1.5 text-slate-400 hover:text-red-600 transition-colors"><Trash2 className="w-4 h-4" /></button>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                            {noticias.filter(n => n.category === 'Entrevista').length === 0 && (
+                              <div className="col-span-full py-16 text-center border-2 border-dashed border-slate-200 rounded-2xl">
+                                <Users className="w-12 h-12 text-slate-200 mx-auto mb-3" />
+                                <h4 className="text-slate-400 font-bold">Nenhuma entrevista publicada</h4>
+                                <p className="text-slate-300 text-xs mt-1">Clique em &quot;Nova Entrevista&quot; para destacar alguém.</p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {activeContentTab === 'videos' && (
+                        <div className="space-y-4">
+                          <div className="flex justify-between items-center mb-4">
+                            <h3 className="font-bold text-slate-800 flex items-center gap-2">
+                              <Video className="w-5 h-5 text-red-500" /> Listagem de Vídeos
+                            </h3>
+                            <button 
+                              onClick={() => openVideoModal()}
+                              className="px-4 py-2 bg-blue-600 text-white rounded-lg text-xs font-bold hover:bg-blue-700 transition-all flex items-center gap-2"
+                            >
+                              <PlusCircle className="w-4 h-4" /> Novo Vídeo
+                            </button>
+                          </div>
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {videos.map(v => (
+                              <div key={v.id} className="border border-slate-200 rounded-xl overflow-hidden group hover:shadow-md transition-all">
+                                <div className="aspect-video relative bg-black flex items-center justify-center">
+                                  {v.thumbnail_url && <img src={v.thumbnail_url} alt="" className="w-full h-full object-cover opacity-60" />}
+                                  <Video className="absolute w-8 h-8 text-white opacity-40 group-hover:opacity-100 transition-all" />
+                                </div>
+                                <div className="p-4">
+                                  <h4 className="font-bold text-slate-800 line-clamp-1">{v.title}</h4>
+                                  <p className="text-xs text-slate-500 mt-1 uppercase font-bold tracking-wider">{v.category}</p>
+                                  <div className="flex justify-end gap-2 mt-4 pt-4 border-t border-slate-100">
+                                    <button onClick={() => openVideoModal(v)} className="p-1.5 text-slate-400 hover:text-blue-600 transition-colors"><Edit2 className="w-4 h-4" /></button>
+                                    <button onClick={() => deleteVideo(v.id)} className="p-1.5 text-slate-400 hover:text-red-600 transition-colors"><Trash2 className="w-4 h-4" /></button>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                            {videos.length === 0 && <div className="col-span-full py-12 text-center text-slate-400 text-sm">Nenhum vídeo cadastrado.</div>}
+                          </div>
+                        </div>
+                      )}
+
+                      {activeContentTab === 'competicoes' && (
+                        <div className="space-y-4">
+                          <div className="flex justify-between items-center mb-4">
+                            <h3 className="font-bold text-slate-800 flex items-center gap-2">
+                              <TrophyIcon className="w-5 h-5 text-amber-500" /> Próximas Competições
+                            </h3>
+                            <button 
+                              onClick={() => openCompModal()}
+                              className="px-4 py-2 bg-blue-600 text-white rounded-lg text-xs font-bold hover:bg-blue-700 transition-all flex items-center gap-2"
+                            >
+                              <PlusCircle className="w-4 h-4" /> Nova Competição
+                            </button>
+                          </div>
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {competicoes.map(c => (
+                              <div key={c.id} className="border border-slate-200 rounded-xl p-4 hover:shadow-md transition-all flex flex-col items-center text-center">
+                                <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mb-3">
+                                  {c.icon_type === 'Trophy' && <TrophyIcon className="w-6 h-6 text-amber-500" />}
+                                  {c.icon_type === 'Activity' && <Activity className="w-6 h-6 text-green-500" />}
+                                  {c.icon_type === 'Medal' && <Medal className="w-6 h-6 text-blue-500" />}
+                                </div>
+                                <h4 className="font-bold text-slate-800">{c.title}</h4>
+                                <span className="text-[10px] font-black uppercase text-blue-600 tracking-tighter mb-2">{c.status}</span>
+                                <p className="text-xs text-slate-500 line-clamp-2">{c.description}</p>
+                                <div className="flex gap-2 mt-4 pt-4 border-t border-slate-100 w-full justify-center">
+                                  <button onClick={() => openCompModal(c)} className="p-1.5 text-slate-400 hover:text-blue-600 transition-colors"><Edit2 className="w-4 h-4" /></button>
+                                  <button onClick={() => deleteComp(c.id)} className="p-1.5 text-slate-400 hover:text-red-600 transition-colors"><Trash2 className="w-4 h-4" /></button>
+                                </div>
+                              </div>
+                            ))}
+                            {competicoes.length === 0 && <div className="col-span-full py-12 text-center text-slate-400 text-sm">Nenhuma competição cadastrada.</div>}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
                 {activeTab === 'usuarios' && (
                   <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col h-[calc(100vh-160px)] min-h-[600px]">
                     <div className="p-6 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-50/50">
@@ -982,7 +1550,7 @@ export default function AdminDashboard() {
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
-                          {filteredUsuarios.map((u) => (
+                          {usuarios.map((u) => (
                             <tr key={u.id} className="hover:bg-slate-50/50 transition-colors">
                               <td className="px-6 py-4">
                                 <div className="flex items-center gap-3">
@@ -1168,7 +1736,7 @@ export default function AdminDashboard() {
           <motion.div 
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="bg-white rounded-2xl shadow-xl w-full max-w-[800px] overflow-hidden max-h-[90vh] flex flex-col"
+            className="bg-white rounded-2xl shadow-xl w-[95%] max-w-[800px] overflow-hidden max-h-[90vh] flex flex-col"
           >
             <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50">
               <h3 className="font-lexend font-bold text-xl text-slate-800 flex items-center gap-2">
@@ -1337,7 +1905,7 @@ export default function AdminDashboard() {
           <motion.div 
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="bg-white rounded-2xl shadow-xl w-full max-w-[450px] overflow-hidden"
+            className="bg-white rounded-2xl shadow-xl w-[95%] max-w-[450px] overflow-hidden"
           >
             <div className="p-8">
               <div className="flex items-center justify-between mb-8">
@@ -1421,6 +1989,391 @@ export default function AdminDashboard() {
                   >
                     {actionLoading === 'save_user' && <Loader2 className="w-4 h-4 animate-spin" />}
                     Salvar Usuário
+                  </button>
+                </div>
+              </form>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {showNewsModal && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[150] flex items-center justify-center p-2 sm:p-4">
+          <motion.div 
+            initial={{ opacity: 0, y: 20, scale: 0.95 }} 
+            animate={{ opacity: 1, y: 0, scale: 1 }} 
+            className="bg-white rounded-2xl shadow-2xl w-[95%] max-w-2xl overflow-hidden flex flex-col max-h-[90vh]"
+          >
+            <div className="p-4 sm:p-6 bg-blue-600 text-white flex justify-between items-center shadow-lg relative z-10 shrink-0">
+              <div>
+                <h3 className="font-lexend font-bold text-lg sm:text-xl">{editingNews ? 'Editar Notícia' : 'Nova Notícia'}</h3>
+                <p className="text-blue-100 text-[10px] sm:text-xs mt-0.5">Mantenha os associados informados sobre a federação.</p>
+              </div>
+              <button 
+                onClick={() => setShowNewsModal(false)}
+                className="p-2 hover:bg-white/20 rounded-full transition-colors"
+              >
+                <X className="w-5 h-5 sm:w-6 h-6" />
+              </button>
+            </div>
+            
+            <div className="p-4 sm:p-8 overflow-y-auto">
+              <form onSubmit={saveNoticia} className="space-y-4 sm:space-y-6">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Título da Notícia</label>
+                  <input 
+                    required 
+                    value={newsForm.title} 
+                    onChange={e => setNewsForm({...newsForm, title: e.target.value})} 
+                    className="w-full px-4 py-2.5 sm:py-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:bg-white outline-none transition-all text-sm"
+                    placeholder="Ex: Novos benefícios para associados"
+                  />
+                </div>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Categoria</label>
+                    <select 
+                      value={newsForm.category} 
+                      onChange={e => setNewsForm({...newsForm, category: e.target.value})} 
+                      className="w-full px-4 py-2.5 sm:py-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:bg-white outline-none transition-all appearance-none text-sm"
+                    >
+                      <option>Campeonato</option>
+                      <option>Geral</option>
+                      <option>Aviso</option>
+                    </select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Data</label>
+                    <input 
+                      type="date" 
+                      required 
+                      value={newsForm.date} 
+                      onChange={e => setNewsForm({...newsForm, date: e.target.value})} 
+                      className="w-full px-4 py-2.5 sm:py-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:bg-white outline-none transition-all text-sm"
+                    />
+                  </div>
+                </div>
+                
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">URL da Imagem de Destaque</label>
+                  <input 
+                    value={newsForm.image_url} 
+                    onChange={e => setNewsForm({...newsForm, image_url: e.target.value})} 
+                    className="w-full px-4 py-2.5 sm:py-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:bg-white outline-none transition-all text-sm" 
+                    placeholder="https://images.unsplash.com/..." 
+                  />
+                </div>
+                
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Conteúdo da Notícia</label>
+                  <textarea 
+                    value={newsForm.content} 
+                    onChange={e => setNewsForm({...newsForm, content: e.target.value})} 
+                    className="w-full px-4 py-2.5 sm:py-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:bg-white outline-none transition-all min-h-[160px] text-sm" 
+                    placeholder="Digíte aqui o conteúdo da notícia..."
+                  />
+                </div>
+                
+                <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                  <button 
+                    type="button" 
+                    onClick={() => setShowNewsModal(false)}
+                    className="order-2 sm:order-1 flex-1 py-3 px-6 bg-slate-100 text-slate-600 font-bold rounded-xl hover:bg-slate-200 transition-colors uppercase tracking-widest text-[10px]"
+                  >
+                    Descartar
+                  </button>
+                  <button 
+                    type="submit" 
+                    disabled={actionLoading === 'save_news'} 
+                    className="order-1 sm:order-2 flex-2 py-3 px-8 bg-blue-600 text-white font-bold rounded-xl shadow-lg shadow-blue-500/20 hover:bg-blue-700 transition-all uppercase tracking-widest text-[10px] flex items-center justify-center gap-2"
+                  >
+                    {actionLoading === 'save_news' && <Loader2 className="w-4 h-4 animate-spin" />}
+                    {editingNews ? 'Atualizar' : 'Publicar'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {showVideoModal && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[150] flex items-center justify-center p-2 sm:p-4">
+          <motion.div 
+            initial={{ opacity: 0, y: 20, scale: 0.95 }} 
+            animate={{ opacity: 1, y: 0, scale: 1 }} 
+            className="bg-white rounded-2xl shadow-2xl w-[95%] max-w-2xl overflow-hidden flex flex-col max-h-[90vh]"
+          >
+            <div className="p-4 sm:p-6 bg-red-600 text-white flex justify-between items-center shadow-lg relative z-10 shrink-0">
+              <div>
+                <h3 className="font-lexend font-bold text-lg sm:text-xl">{editingVideo ? 'Editar Vídeo' : 'Adicionar Vídeo'}</h3>
+                <p className="text-red-100 text-[10px] sm:text-xs mt-0.5">Destaque os melhores momentos da rodada.</p>
+              </div>
+              <button 
+                onClick={() => setShowVideoModal(false)}
+                className="p-2 hover:bg-white/20 rounded-full transition-colors"
+              >
+                <X className="w-5 h-5 sm:w-6 h-6" />
+              </button>
+            </div>
+            
+            <div className="p-4 sm:p-8 overflow-y-auto">
+              <form onSubmit={saveVideo} className="space-y-4 sm:space-y-6">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Título do Vídeo</label>
+                  <input 
+                    required 
+                    value={videoForm.title} 
+                    onChange={e => setVideoForm({...videoForm, title: e.target.value})} 
+                    className="w-full px-4 py-2.5 sm:py-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:border-red-500 focus:bg-white outline-none transition-all text-sm"
+                    placeholder="Ex: Gols da Rodada #12"
+                  />
+                </div>
+                
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">URL do Vídeo (YouTube/Vimeo)</label>
+                  <input 
+                    required 
+                    value={videoForm.video_url} 
+                    onChange={e => setVideoForm({...videoForm, video_url: e.target.value})} 
+                    className="w-full px-4 py-2.5 sm:py-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:border-red-500 focus:bg-white outline-none transition-all text-sm"
+                    placeholder="https://www.youtube.com/watch?v=..."
+                  />
+                </div>
+                
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">URL da Thumbnail</label>
+                  <input 
+                    value={videoForm.thumbnail_url} 
+                    onChange={e => setVideoForm({...videoForm, thumbnail_url: e.target.value})} 
+                    className="w-full px-4 py-2.5 sm:py-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:border-red-500 focus:bg-white outline-none transition-all text-sm"
+                    placeholder="https://..."
+                  />
+                  <p className="text-[10px] text-slate-400 font-medium">Dica: URLs do Youtube geram thumbnails automáticas.</p>
+                </div>
+                
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Categoria do Vídeo</label>
+                  <select 
+                    value={videoForm.category} 
+                    onChange={e => setVideoForm({...videoForm, category: e.target.value})} 
+                    className="w-full px-4 py-2.5 sm:py-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:border-red-500 focus:bg-white outline-none transition-all appearance-none text-sm"
+                  >
+                    <option>Melhores Momentos</option>
+                    <option>Entrevistas</option>
+                    <option>Jogos Completos</option>
+                    <option>Dicas Técnicas</option>
+                  </select>
+                </div>
+                
+                <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                  <button 
+                    type="button" 
+                    onClick={() => setShowVideoModal(false)}
+                    className="order-2 sm:order-1 flex-1 py-3 px-6 bg-slate-100 text-slate-600 font-bold rounded-xl hover:bg-slate-200 transition-colors uppercase tracking-widest text-[10px]"
+                  >
+                    Cancelar
+                  </button>
+                  <button 
+                    type="submit" 
+                    disabled={actionLoading === 'save_video'} 
+                    className="order-1 sm:order-2 flex-2 py-3 px-8 bg-red-600 text-white font-bold rounded-xl shadow-lg shadow-red-500/20 hover:bg-red-700 transition-all uppercase tracking-widest text-[10px] flex items-center justify-center gap-2"
+                  >
+                    {actionLoading === 'save_video' && <Loader2 className="w-4 h-4 animate-spin" />}
+                    {editingVideo ? 'Atualizar' : 'Salvar'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {showCompModal && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[150] flex items-center justify-center p-2 sm:p-4">
+          <motion.div 
+            initial={{ opacity: 0, y: 20, scale: 0.95 }} 
+            animate={{ opacity: 1, y: 0, scale: 1 }} 
+            className="bg-white rounded-2xl shadow-2xl w-[95%] max-w-2xl overflow-hidden flex flex-col max-h-[90vh]"
+          >
+            <div className="p-4 sm:p-6 bg-amber-500 text-white flex justify-between items-center shadow-lg relative z-10 shrink-0">
+              <div>
+                <h3 className="font-lexend font-bold text-lg sm:text-xl">{editingComp ? 'Editar Competição' : 'Nova Competição'}</h3>
+                <p className="text-amber-100 text-[10px] sm:text-xs mt-0.5">Gerencie os principais torneios da federação.</p>
+              </div>
+              <button 
+                onClick={() => setShowCompModal(false)}
+                className="p-2 hover:bg-white/20 rounded-full transition-colors"
+              >
+                <X className="w-5 h-5 sm:w-6 h-6" />
+              </button>
+            </div>
+            
+            <div className="p-4 sm:p-8 overflow-y-auto">
+              <form onSubmit={saveComp} className="space-y-4 sm:space-y-6">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Nome Oficial do Torneio</label>
+                  <input 
+                    required 
+                    value={compForm.title} 
+                    onChange={e => setCompForm({...compForm, title: e.target.value})} 
+                    className="w-full px-4 py-2.5 sm:py-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:border-amber-500 focus:bg-white outline-none transition-all text-sm"
+                    placeholder="Ex: Taça Santa Catarina 2024"
+                  />
+                </div>
+                
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Descrição ou Slogan</label>
+                  <textarea 
+                    required 
+                    value={compForm.description} 
+                    onChange={e => setCompForm({...compForm, description: e.target.value})} 
+                    className="w-full px-4 py-2.5 sm:py-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:border-amber-500 focus:bg-white outline-none transition-all text-sm" 
+                    rows={2} 
+                    placeholder="Uma frase curta que resuma o torneio..."
+                  />
+                </div>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Ícone Visual</label>
+                    <select 
+                      value={compForm.icon_type} 
+                      onChange={e => setCompForm({...compForm, icon_type: e.target.value})} 
+                      className="w-full px-4 py-2.5 sm:py-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:border-amber-500 focus:bg-white outline-none transition-all appearance-none text-sm"
+                    >
+                      <option value="Trophy">🏆 Troféu</option>
+                      <option value="Activity">🏃 Atividade</option>
+                      <option value="Medal">🏅 Medalha</option>
+                    </select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Status Atual</label>
+                    <select 
+                      value={compForm.status} 
+                      onChange={e => setCompForm({...compForm, status: e.target.value})} 
+                      className="w-full px-4 py-2.5 sm:py-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:border-amber-500 focus:bg-white outline-none transition-all appearance-none text-sm"
+                    >
+                      <option>Inscrições Abertas</option>
+                      <option>Em Andamento</option>
+                      <option>Em Breve</option>
+                      <option>Finalizado</option>
+                    </select>
+                  </div>
+                </div>
+                
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">URL de Informações (Link)</label>
+                  <input 
+                    value={compForm.link_url} 
+                    onChange={e => setCompForm({...compForm, link_url: e.target.value})} 
+                    className="w-full px-4 py-2.5 sm:py-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:border-amber-500 focus:bg-white outline-none transition-all text-sm"
+                    placeholder="Página de regulamento ou inscrições..."
+                  />
+                </div>
+                
+                <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                  <button 
+                    type="button" 
+                    onClick={() => setShowCompModal(false)}
+                    className="order-2 sm:order-1 flex-1 py-3 px-6 bg-slate-100 text-slate-600 font-bold rounded-xl hover:bg-slate-200 transition-colors uppercase tracking-widest text-[10px]"
+                  >
+                    Descartar
+                  </button>
+                  <button 
+                    type="submit" 
+                    disabled={actionLoading === 'save_comp'} 
+                    className="order-1 sm:order-2 flex-2 py-3 px-8 bg-amber-500 text-white font-bold rounded-xl shadow-lg shadow-amber-500/20 hover:bg-amber-600 transition-all uppercase tracking-widest text-[10px] flex items-center justify-center gap-2"
+                  >
+                    {actionLoading === 'save_comp' && <Loader2 className="w-4 h-4 animate-spin" />}
+                    {editingComp ? 'Atualizar' : 'Salvar'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {showInterviewModal && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[150] flex items-center justify-center p-2 sm:p-4">
+          <motion.div 
+            initial={{ opacity: 0, y: 20, scale: 0.95 }} 
+            animate={{ opacity: 1, y: 0, scale: 1 }} 
+            className="bg-white rounded-2xl shadow-2xl w-[95%] max-w-2xl overflow-hidden flex flex-col max-h-[90vh]"
+          >
+            <div className="p-4 sm:p-6 bg-emerald-600 text-white flex justify-between items-center shadow-lg relative z-10 shrink-0">
+              <div>
+                <h3 className="font-lexend font-bold text-lg sm:text-xl">{editingInterview ? 'Editar Entrevista' : 'Nova Entrevista'}</h3>
+                <p className="text-emerald-100 text-[10px] sm:text-xs mt-0.5">Histórias e legados de quem constrói o handebol.</p>
+              </div>
+              <button onClick={() => setShowInterviewModal(false)} className="p-2 hover:bg-white/20 rounded-full transition-colors">
+                <X className="w-5 h-5 sm:w-6 h-6" />
+              </button>
+            </div>
+            
+            <div className="p-4 sm:p-8 overflow-y-auto font-sans">
+              <form onSubmit={saveInterview} className="space-y-4 sm:space-y-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Nome do Personagem</label>
+                    <input 
+                      required 
+                      value={interviewForm.personality_name} 
+                      onChange={e => setInterviewForm({...interviewForm, personality_name: e.target.value})} 
+                      className="w-full px-4 py-2.5 sm:py-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:border-emerald-500 focus:bg-white outline-none transition-all text-sm"
+                      placeholder="Ex: Prof. José Silva"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Data</label>
+                    <input 
+                      type="date" required 
+                      value={interviewForm.date} 
+                      onChange={e => setInterviewForm({...interviewForm, date: e.target.value})} 
+                      className="w-full px-4 py-2.5 sm:py-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:border-emerald-500 focus:bg-white outline-none transition-all text-sm"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Título da Chamada</label>
+                  <input 
+                    required 
+                    value={interviewForm.title} 
+                    onChange={e => setInterviewForm({...interviewForm, title: e.target.value})} 
+                    className="w-full px-4 py-2.5 sm:py-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:border-emerald-500 focus:bg-white outline-none transition-all text-sm font-bold"
+                    placeholder="Ex: O sonho de levar o handebol para as escolas"
+                  />
+                </div>
+                
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">URL da Foto</label>
+                  <input 
+                    value={interviewForm.image_url} 
+                    onChange={e => setInterviewForm({...interviewForm, image_url: e.target.value})} 
+                    className="w-full px-4 py-2.5 sm:py-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:border-emerald-500 focus:bg-white outline-none transition-all text-sm" 
+                    placeholder="Link para a foto do entrevistado" 
+                  />
+                </div>
+                
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Transcrição da Entrevista / Conteúdo</label>
+                  <textarea 
+                    required
+                    value={interviewForm.content} 
+                    onChange={e => setInterviewForm({...interviewForm, content: e.target.value})} 
+                    className="w-full px-4 py-2.5 sm:py-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:border-emerald-500 focus:bg-white outline-none transition-all min-h-[200px] text-sm" 
+                    placeholder="Comece a entrevista aqui..."
+                  />
+                </div>
+                
+                <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                  <button type="button" onClick={() => setShowInterviewModal(false)} className="order-2 sm:order-1 flex-1 py-3 px-6 bg-slate-100 text-slate-600 font-bold rounded-xl hover:bg-slate-200 transition-colors uppercase tracking-widest text-[10px]">Descartar</button>
+                  <button type="submit" disabled={actionLoading === 'save_interview'} className="order-1 sm:order-2 flex-2 py-3 px-8 bg-emerald-600 text-white font-bold rounded-xl shadow-lg shadow-emerald-500/20 hover:bg-emerald-700 transition-all uppercase tracking-widest text-[10px] flex items-center justify-center gap-2">
+                    {actionLoading === 'save_interview' && <Loader2 className="w-4 h-4 animate-spin" />}
+                    {editingInterview ? 'Salvar Alterações' : 'Publicar Entrevista'}
                   </button>
                 </div>
               </form>

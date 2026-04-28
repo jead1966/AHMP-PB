@@ -1,8 +1,51 @@
+'use client';
+
 import Image from 'next/image';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Trophy, Activity, Medal, ChevronRight, Send, Mail, Play, Quote, ArrowRight } from 'lucide-react';
+import { Trophy, Activity, Medal, ChevronRight, Play, ArrowRight, Loader2, X } from 'lucide-react';
+import { createClient } from '@supabase/supabase-js';
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
 
 export default function Home() {
+  const [noticias, setNoticias] = useState<any[]>([]);
+  const [videos, setVideos] = useState<any[]>([]);
+  const [competicoes, setCompeticoes] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const [selectedNews, setSelectedNews] = useState<any>(null);
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const { data: news } = await supabase.from('noticias').select('*').order('date', { ascending: false });
+        const { data: vids } = await supabase.from('videos').select('*').order('created_at', { ascending: false });
+        const { data: comps } = await supabase.from('competicoes').select('*').order('created_at', { ascending: false });
+        
+        if (news) setNoticias(news);
+        if (vids) setVideos(vids);
+        if (comps) setCompeticoes(comps);
+      } catch (err) {
+        console.error('Erro ao carregar dados:', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData();
+  }, []);
+
+  const getIcon = (type: string) => {
+    switch (type) {
+      case 'Activity': return <Activity className="text-on-primary w-12 h-12" />;
+      case 'Medal': return <Medal className="text-on-primary w-12 h-12" />;
+      default: return <Trophy className="text-on-primary w-12 h-12" />;
+    }
+  };
+
   return (
     <main className="flex-grow pt-16">
       {/* Seção Hero */}
@@ -24,59 +67,150 @@ export default function Home() {
             Ver Todas <ChevronRight className="w-5 h-5" />
           </Link>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 auto-rows-auto md:auto-rows-[300px]">
-          <div className="md:col-span-2 md:row-span-2 relative rounded-lg overflow-hidden group cursor-pointer bg-surface-container border border-outline-variant hover:border-primary-container transition-all shadow-sm hover:shadow-md">
-            <Image fill src="https://lh3.googleusercontent.com/aida-public/AB6AXuAfDpes7rTGoTYFRd26lzmQv8rb6UV7oUFZOo5Y-9MkjDsvUx4rUY_XUXrP9BaqGUdKUxeZApKK7VWythjuXAUWKe3fgV4qJpOuSBxEybOIQlclxqk9gZFdZUZqml1JDp9s9rlRPXXq6eQuQHgoK7nmW1bqX9IvYyRm_Li8AKC5b796Xw5I3UO9A_nLaXAA8MdOfopRaXpzW_dGvt8AWxNR-8oLvaJyeFhB1VXEf6Woklsz04Kq6bVUU9cm8RUB0ecFsrtb2YjAOnQ" alt="Notícia" className="object-cover transition-transform duration-500 group-hover:scale-105" referrerPolicy="no-referrer" />
-            <div className="absolute inset-0 bg-gradient-to-t from-primary via-primary/50 to-transparent"></div>
-            <div className="absolute bottom-0 left-0 p-8 w-full">
-              <span className="inline-block bg-secondary-container text-on-secondary px-2 py-1 rounded text-xs font-label-bold mb-3">Campeonato</span>
-              <h3 className="font-headline-md text-headline-md text-on-primary mb-2 line-clamp-2">Campeonato Estadual Começa Próximo Mês com Novas Regras</h3>
-              <p className="font-body-md text-body-md text-inverse-primary line-clamp-2">A comissão técnica anunciou mudanças significativas para a temporada de 2024, visando aumentar a dinâmica das partidas.</p>
-            </div>
-          </div>
-          <div className="col-span-1 bg-surface rounded-lg border border-outline-variant overflow-hidden hover:border-primary-container transition-all shadow-sm hover:shadow-md flex flex-col cursor-pointer group">
-            <div className="h-40 relative overflow-hidden">
-              <Image fill src="https://lh3.googleusercontent.com/aida-public/AB6AXuBi3dY-3ZRR6rjcRgTHJbPA0pFVV3MOvZmHM-qUYS8WCZfFT54sGMOGl-oGGCFokqJUzGCNoCLPA_M02nxlTBvnZv320B_iHqe6IagKEmvuIw4HKhTG0kpZsyJVFcxUsrVt5MY_ZStxPY7oGEFLw0CszGMLGuyNM0zE6zv-TYBo6ZuktyS8S-4600QXsPufT_8XWL4FQ3Up3bamoFF5Zgzuz4Sn15scTfjSm8eUhTI7u6PTa_AIAgCYAg5dJdnsruvgZPqlV7JXpd4" alt="Notícia" className="object-cover transition-transform duration-500 group-hover:scale-105" referrerPolicy="no-referrer" />
-            </div>
-            <div className="p-5 flex-grow flex flex-col justify-between">
-              <div>
-                <span className="text-xs font-label-bold text-outline mb-2 block">12 Out 2023</span>
-                <h4 className="font-label-bold text-label-bold text-on-surface line-clamp-2 hover:text-primary-container transition-colors">Inscrições Abertas para a Liga Juvenil</h4>
-              </div>
-            </div>
-          </div>
-          <div className="col-span-1 bg-surface rounded-lg border border-outline-variant overflow-hidden hover:border-primary-container transition-all shadow-sm hover:shadow-md flex flex-col cursor-pointer group">
-            <div className="h-40 relative overflow-hidden">
-              <Image fill src="https://lh3.googleusercontent.com/aida-public/AB6AXuC5SvxBxBC8GDTlkzemZo-1lgMnPUvnQ9_thz312IDRmiUI2xlVibfibxD5e7xDaNpql63Qm2ETIFYUq4ZEyQKe7ViU1Qui72fizDQ10tnqD833pac7nlF6tlqIhK12axr_qUfhOD3ELAoH7capsoV1a3QCrbL4L8Aqqj3aI7yRaWP0DOt0yMXmwr-TXjMIGJ7igNd6h6ub19JFKKMe35RavIIW0zbRw7_6zvxk3uk_yKn4N2bouwMwNV4nOuUrSF4UGAuB4wwN_8I" alt="Notícia" className="object-cover transition-transform duration-500 group-hover:scale-105" referrerPolicy="no-referrer" />
-            </div>
-            <div className="p-5 flex-grow flex flex-col justify-between">
-              <div>
-                <span className="text-xs font-label-bold text-outline mb-2 block">10 Out 2023</span>
-                <h4 className="font-label-bold text-label-bold text-on-surface line-clamp-2 hover:text-primary-container transition-colors">Clínica de Arbitragem: Atualização de Regras</h4>
-              </div>
-            </div>
-          </div>
+        
+        {loading ? (
+          <div className="flex justify-center py-20"><Loader2 className="w-8 h-8 animate-spin text-blue-600" /></div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {noticias.length > 0 ? (
+              <>
+                {/* Destaque Principal */}
+                <div 
+                  onClick={() => setSelectedNews(noticias[0])}
+                  className="md:col-span-2 md:row-span-2 relative rounded-lg overflow-hidden group cursor-pointer bg-surface-container border border-outline-variant hover:border-primary-container transition-all shadow-sm hover:shadow-md h-[400px] md:h-auto"
+                >
+                  <Image 
+                    fill 
+                    src={noticias[0].image_url || "https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&q=80"} 
+                    alt={noticias[0].title} 
+                    className="object-cover transition-transform duration-500 group-hover:scale-105" 
+                    referrerPolicy="no-referrer" 
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-primary via-primary/30 to-transparent"></div>
+                    <div className="absolute bottom-0 left-0 p-8 w-full">
+                      <span className="inline-block bg-secondary-container text-on-secondary px-2 py-1 rounded text-xs font-label-bold mb-3 uppercase tracking-wider">{noticias[0].category}</span>
+                      <h3 className="font-headline-md text-headline-md text-on-primary mb-2 line-clamp-2">{noticias[0].title}</h3>
+                      <p className="font-body-md text-body-md text-inverse-primary line-clamp-3">{noticias[0].description || noticias[0].content}</p>
+                    </div>
+                  </div>
+                  
+                  {/* Outras notícias */}
+                  {noticias.slice(1, 3).map((item) => (
+                    <div 
+                      key={item.id} 
+                      onClick={() => setSelectedNews(item)}
+                      className="col-span-1 bg-surface rounded-lg border border-outline-variant overflow-hidden hover:border-primary-container transition-all shadow-sm hover:shadow-md flex flex-col cursor-pointer group"
+                    >
+                      <div className="h-40 relative overflow-hidden">
+                        <Image 
+                          fill 
+                          src={item.image_url || "https://images.unsplash.com/photo-1510051646601-996027be280b?auto=format&fit=crop&q=80"} 
+                          alt={item.title} 
+                          className="object-cover transition-transform duration-500 group-hover:scale-105" 
+                          referrerPolicy="no-referrer" 
+                        />
+                      </div>
+                      <div className="p-5 flex-grow flex flex-col justify-between">
+                        <div>
+                          <span className="text-xs font-label-bold text-outline mb-2 block">{new Date(item.date).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+                          <h4 className="font-label-bold text-label-bold text-on-surface line-clamp-3 hover:text-primary-container transition-colors">{item.title}</h4>
+                          <p className="text-xs text-on-surface-variant mt-2 line-clamp-2">{item.description || item.content?.substring(0, 100)}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
 
-          {/* Card Entrevista (integrado nas Notícias) */}
-          <div className="md:col-span-3 bg-surface rounded-lg border border-outline-variant overflow-hidden hover:border-primary-container transition-all shadow-sm flex flex-col md:flex-row group cursor-pointer mt-2">
-            <div className="w-full md:w-[300px] h-64 md:h-full relative overflow-hidden flex-shrink-0">
-              <Image fill src="https://ue5crmwsvgdovcsb.public.blob.vercel-storage.com/Ze.jpg" alt="Wellington Lima" className="object-cover transition-transform duration-500 group-hover:scale-105" referrerPolicy="no-referrer" />
-              <div className="absolute top-4 left-4 bg-primary text-on-primary text-xs px-2 py-1 rounded font-label-bold z-10 shadow-sm">Entrevista da Semana</div>
-            </div>
-            <div className="p-6 md:p-8 flex-grow flex flex-col justify-center">
-              <h3 className="font-headline-md text-headline-md text-primary mb-1">Wellington Souza de Lima</h3>
-              <p className="font-body-sm text-on-surface-variant font-bold uppercase mb-4 tracking-wider">Técnico da AHMP</p>
-              <blockquote className="font-body-md text-on-surface italic border-l-4 border-secondary-container pl-4 mb-6 relative">
-                &quot;O handebol não é apenas força bruta; é sobre a inteligência tática, a leitura do jogo em frações de segundo e a união inquebrável da equipe dentro da quadra.&quot;
-              </blockquote>
-              <Link href="#" className="inline-flex items-center gap-2 font-label-bold text-label-bold text-primary hover:text-secondary-container transition-colors mt-auto">
-                Ler Entrevista Completa <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-              </Link>
-            </div>
+                {/* Exemplo de card de entrevista se houver uma notícia na categoria entrevista */}
+                {noticias.find(n => n.category === 'Entrevista') && (
+                  <div 
+                    onClick={() => setSelectedNews(noticias.find(n => n.category === 'Entrevista'))}
+                    className="md:col-span-3 bg-surface rounded-lg border border-outline-variant overflow-hidden hover:border-primary-container transition-all shadow-sm flex flex-col md:flex-row group cursor-pointer mt-2"
+                  >
+                    <div className="w-full md:w-[300px] h-64 md:h-full relative overflow-hidden flex-shrink-0">
+                      <Image 
+                        fill 
+                        src={noticias.find(n => n.category === 'Entrevista').image_url} 
+                        alt="Entrevista" 
+                        className="object-cover transition-transform duration-500 group-hover:scale-105" 
+                        referrerPolicy="no-referrer" 
+                      />
+                      <div className="absolute top-4 left-4 bg-primary text-on-primary text-xs px-2 py-1 rounded font-label-bold z-10 shadow-sm">Entrevista em Destaque</div>
+                    </div>
+                    <div className="p-6 md:p-8 flex-grow flex flex-col justify-center">
+                      <h3 className="font-headline-md text-headline-md text-primary mb-1">{noticias.find(n => n.category === 'Entrevista').title}</h3>
+                      <p className="font-body-md text-on-surface line-clamp-3 italic mb-6">
+                        &quot;{noticias.find(n => n.category === 'Entrevista').description}&quot;
+                      </p>
+                      <button className="inline-flex items-center gap-2 font-label-bold text-label-bold text-primary hover:text-secondary-container transition-colors mt-auto text-left">
+                        Ver Mais <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="col-span-3 bg-slate-50 border border-dashed border-slate-200 rounded-xl py-20 text-center text-slate-400">
+                Adicione notícias no painel administrativo para elas aparecerem aqui.
+              </div>
+            )}
           </div>
-
-        </div>
+        )}
       </section>
+
+      {/* Modal de Detalhes da Notícia */}
+      {selectedNews && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl">
+            <div className="relative h-64 shrink-0">
+              <Image 
+                fill 
+                src={selectedNews.image_url || "https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&q=80"} 
+                alt={selectedNews.title} 
+                className="object-cover"
+                referrerPolicy="no-referrer"
+              />
+              <button 
+                onClick={() => setSelectedNews(null)}
+                className="absolute top-4 right-4 bg-black/50 text-white p-2 rounded-full hover:bg-black/70 transition-colors"
+              >
+                <X className="w-6 h-6" />
+              </button>
+              <div className="absolute bottom-4 left-4">
+                <span className="bg-primary text-on-primary px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
+                  {selectedNews.category}
+                </span>
+              </div>
+            </div>
+            <div className="p-6 md:p-10 overflow-y-auto">
+              <div className="text-xs text-slate-400 mb-2 font-medium">
+                {new Date(selectedNews.date).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}
+              </div>
+              <h2 className="text-2xl md:text-3xl font-headline-lg text-primary mb-6 leading-tight">
+                {selectedNews.title}
+              </h2>
+              <div className="prose prose-slate max-w-none">
+                {selectedNews.content ? (
+                  <div className="whitespace-pre-wrap text-on-surface-variant leading-relaxed">
+                    {selectedNews.content}
+                  </div>
+                ) : (
+                  <p className="text-on-surface-variant italic">
+                    {selectedNews.description}
+                  </p>
+                )}
+              </div>
+            </div>
+            <div className="p-4 border-t border-slate-100 flex justify-end">
+              <button 
+                onClick={() => setSelectedNews(null)}
+                className="px-6 py-2 bg-slate-100 text-slate-600 rounded-lg font-bold hover:bg-slate-200 transition-colors"
+              >
+                Fechar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Vídeos */}
       <section className="py-12 px-gutter max-w-[1400px] mx-auto bg-surface-container-low rounded-xl mb-12 mt-8">
@@ -87,29 +221,32 @@ export default function Home() {
           </div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="relative rounded-lg overflow-hidden group cursor-pointer aspect-video bg-black shadow-md border border-outline-variant">
-            <Image fill src="https://lh3.googleusercontent.com/aida-public/AB6AXuBvj3vHRNc8Zfq5C0ORM3Uqgq_QLiysW30JBfoDlb3SxxxFzj7tXXdvM5bCoatN9ky5zDWJybjoblFjYQ38lk7VJcAkf75hPWsvxqagLQCVh0rYyScj6jQxxvdXeZkM-UMM0BaCiSm6zzp-R-IeEr7jwgra0yHZSvgLC-Ca1hVXvbMukgNy7rBcBUiiQZO8Tk5K-PuKsNzXbzAgbxpc7TPV6Tu1Jqu9vjylOfMsaB-EpLvKBKpQSQ8apPp-8bToOsnx3PTIktC2qv8" alt="Vídeo principal" className="object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-300" referrerPolicy="no-referrer" />
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-16 h-16 bg-secondary-container rounded-full flex items-center justify-center shadow-lg transform group-hover:scale-110 transition-transform duration-300">
-                <Play fill="currentColor" className="text-on-secondary w-8 h-8 ml-1" />
+          {videos.length > 0 ? (
+            videos.slice(0, 2).map((vid) => (
+              <div key={vid.id} className="relative rounded-lg overflow-hidden group cursor-pointer aspect-video bg-black shadow-md border border-outline-variant">
+                <Image 
+                  fill 
+                  src={vid.thumbnail_url || "https://images.unsplash.com/photo-1510051646601-996027be280b?auto=format&fit=crop&q=80"} 
+                  alt={vid.title} 
+                  className="object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-300" 
+                  referrerPolicy="no-referrer" 
+                />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-16 h-16 bg-secondary-container rounded-full flex items-center justify-center shadow-lg transform group-hover:scale-110 transition-transform duration-300">
+                    <Play fill="currentColor" className="text-on-secondary w-8 h-8 ml-1" />
+                  </div>
+                </div>
+                <div className="absolute bottom-0 left-0 w-full p-6 bg-gradient-to-t from-black/80 to-transparent text-white">
+                  <span className="bg-primary/80 text-on-primary text-[10px] px-2 py-0.5 rounded font-bold mb-2 inline-block backdrop-blur-sm uppercase tracking-wide">{vid.category}</span>
+                  <h3 className="font-bold text-lg md:text-xl">{vid.title}</h3>
+                </div>
               </div>
+            ))
+          ) : (
+            <div className="col-span-2 bg-white/50 border border-dashed border-slate-200 rounded-xl py-12 text-center text-slate-400">
+              Nenhum vídeo disponível no momento.
             </div>
-            <div className="absolute bottom-0 left-0 w-full p-6 bg-gradient-to-t from-black/80 to-transparent">
-              <span className="bg-primary/80 text-on-primary text-xs px-2 py-1 rounded font-label-bold mb-2 inline-block backdrop-blur-sm">Melhores Momentos</span>
-              <h3 className="font-headline-md text-headline-md text-on-primary">Final do Campeonato Regional 2023</h3>
-            </div>
-          </div>
-          <div className="relative rounded-lg overflow-hidden group cursor-pointer aspect-video bg-black shadow-sm border border-outline-variant">
-            <Image fill src="https://lh3.googleusercontent.com/aida-public/AB6AXuCEJ5s03k5riRfHa7Pq8JYch8CJQtA5QsbY1RSqP3BMHoY9D_lKcdplEd7bo7dsp-ihCh198T7WW6WXzCoUfSaXhvK1MNQKjq4a2isdQcIXMDbJhrDMZMi-HSJKof6joqj27Fi4L1tpW4PRoBmHgKZlNC_A6jraou9lFSDbKHUF8FKKBt9vERNsTFdcg1LGMYoccNxTdSc6immZOAQnMvP6LtRy6GbHq60RxkX1_zPAOdUxahjfqRY5x2-qghsVdwvHMACgwDcYD8c" alt="Vídeo 1" className="object-cover opacity-70 group-hover:opacity-100 transition-opacity duration-300 grayscale group-hover:grayscale-0" referrerPolicy="no-referrer" />
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-16 h-16 bg-white/20 backdrop-blur-md border border-white/50 rounded-full flex items-center justify-center group-hover:bg-secondary-container group-hover:border-transparent transition-all duration-300">
-                <Play fill="currentColor" className="text-white w-8 h-8 ml-1" />
-              </div>
-            </div>
-            <div className="absolute bottom-0 left-0 w-full p-6 bg-gradient-to-t from-black/80 to-transparent">
-              <h3 className="font-headline-md text-headline-md text-on-primary">Top 10 Defesas da Rodada</h3>
-            </div>
-          </div>
+          )}
         </div>
       </section>
 
@@ -122,37 +259,31 @@ export default function Home() {
           </div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          <div className="bg-surface-container-low rounded-xl border border-outline-variant p-6 flex flex-col items-center text-center shadow-sm hover:shadow-md transition-shadow">
-            <div className="w-24 h-24 bg-primary-container rounded-full flex items-center justify-center mb-4">
-              <Trophy className="text-on-primary w-12 h-12" />
+          {competicoes.length > 0 ? (
+            competicoes.map((comp) => (
+              <div key={comp.id} className="bg-surface-container-low rounded-xl border border-outline-variant p-6 flex flex-col items-center text-center shadow-sm hover:shadow-md transition-shadow">
+                <div className="w-24 h-24 bg-primary-container rounded-full flex items-center justify-center mb-4 text-white">
+                  {getIcon(comp.icon_type)}
+                </div>
+                <span className={`text-[10px] font-black px-3 py-1 rounded-full mb-3 uppercase ${
+                  comp.status.includes('Inscrições') ? 'bg-green-100 text-green-800' :
+                  comp.status.includes('Andamento') ? 'bg-orange-100 text-orange-800' :
+                  'bg-blue-100 text-blue-800'
+                }`}>
+                  {comp.status}
+                </span>
+                <h3 className="font-headline-md text-headline-md text-on-surface mb-2">{comp.title}</h3>
+                <p className="font-body-md text-body-md text-on-surface-variant mb-6">{comp.description}</p>
+                <Link href={comp.link_url || "#"} className="mt-auto w-full py-3 px-6 bg-primary text-on-primary rounded-lg font-bold text-sm hover:bg-primary/90 transition-colors">Saiba Mais</Link>
+              </div>
+            ))
+          ) : (
+            <div className="col-span-3 bg-slate-50 border border-dashed border-slate-200 rounded-xl py-12 text-center text-slate-400">
+              Novas competições serão listadas em breve.
             </div>
-            <span className="bg-green-100 text-green-800 text-xs font-label-bold px-3 py-1 rounded-full mb-3 uppercase">Inscrições Abertas</span>
-            <h3 className="font-headline-md text-headline-md text-on-surface mb-2">Copa Verão 2024</h3>
-            <p className="font-body-md text-body-md text-on-surface-variant mb-6">O maior torneio regional de abertura de temporada para todas as categorias.</p>
-            <Link href="#" className="mt-auto w-full py-3 px-6 bg-primary text-on-primary rounded-DEFAULT font-label-bold text-label-bold hover:bg-primary-container transition-colors">Saiba Mais</Link>
-          </div>
-          <div className="bg-surface-container-low rounded-xl border border-outline-variant p-6 flex flex-col items-center text-center shadow-sm hover:shadow-md transition-shadow">
-            <div className="w-24 h-24 bg-secondary-container rounded-full flex items-center justify-center mb-4">
-              <Activity className="text-on-primary w-12 h-12" />
-            </div>
-            <span className="bg-orange-100 text-orange-800 text-xs font-label-bold px-3 py-1 rounded-full mb-3 uppercase">Em Andamento</span>
-            <h3 className="font-headline-md text-headline-md text-on-surface mb-2">Liga Escolar Sub-17</h3>
-            <p className="font-body-md text-body-md text-on-surface-variant mb-6">Competição focada no desenvolvimento de novos talentos nas escolas parceiras.</p>
-            <Link href="#" className="mt-auto w-full py-3 px-6 bg-primary text-on-primary rounded-DEFAULT font-label-bold text-label-bold hover:bg-primary-container transition-colors">Saiba Mais</Link>
-          </div>
-          <div className="bg-surface-container-low rounded-xl border border-outline-variant p-6 flex flex-col items-center text-center shadow-sm hover:shadow-md transition-shadow">
-            <div className="w-24 h-24 bg-tertiary-container rounded-full flex items-center justify-center mb-4">
-              <Medal className="text-on-tertiary-container w-12 h-12" />
-            </div>
-            <span className="bg-blue-100 text-blue-800 text-xs font-label-bold px-3 py-1 rounded-full mb-3 uppercase">Em Breve</span>
-            <h3 className="font-headline-md text-headline-md text-on-surface mb-2">Torneio dos Campeões</h3>
-            <p className="font-body-md text-body-md text-on-surface-variant mb-6">O confronto final entre os vencedores das ligas regionais do último ano.</p>
-            <Link href="#" className="mt-auto w-full py-3 px-6 bg-primary text-on-primary rounded-DEFAULT font-label-bold text-label-bold hover:bg-primary-container transition-colors">Saiba Mais</Link>
-          </div>
+          )}
         </div>
       </section>
-
-
     </main>
   );
 }
