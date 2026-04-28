@@ -274,7 +274,14 @@ export default function Home() {
                 </span>
                 <h3 className="font-headline-md text-headline-md text-on-surface mb-2">{comp.title}</h3>
                 <p className="font-body-md text-body-md text-on-surface-variant mb-6">{comp.description}</p>
-                <Link href={comp.link_url || "#"} className="mt-auto w-full py-3 px-6 bg-primary text-on-primary rounded-lg font-bold text-sm hover:bg-primary/90 transition-colors">Saiba Mais</Link>
+                <Link 
+                  href={comp.link_url || "#"} 
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-auto w-full py-3 px-6 bg-primary text-on-primary rounded-lg font-bold text-sm hover:bg-primary/90 transition-colors text-center"
+                >
+                  Saiba Mais
+                </Link>
               </div>
             ))
           ) : (
