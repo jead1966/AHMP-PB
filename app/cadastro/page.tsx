@@ -70,7 +70,6 @@ export default function Cadastro() {
           await supabase.auth.signOut();
         }
       }
-      setAuthChecked(true);
     }
     checkExistingSession();
   }, [router]);
