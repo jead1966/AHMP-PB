@@ -64,8 +64,16 @@ export default function AdminDashboard() {
     associado_id: '',
     month: new Date().getMonth() + 1,
     year: new Date().getFullYear(),
-    amount: 50.00,
+    amount: 60.00,
     payment_method: 'Pix'
+  });
+
+  // Generate Mensalidades Form
+  const [showGenerateModal, setShowGenerateModal] = useState(false);
+  const [generateForm, setGenerateForm] = useState({
+    month: new Date().getMonth() + 1,
+    year: new Date().getFullYear(),
+    amount: 60.00
   });
 
   // Search states
@@ -357,7 +365,7 @@ export default function AdminDashboard() {
         associado_id: '',
         month: new Date().getMonth() + 1,
         year: new Date().getFullYear(),
-        amount: 50.00,
+        amount: 60.00,
         payment_method: 'Pix'
       });
       await fetchData(true);
@@ -389,12 +397,13 @@ export default function AdminDashboard() {
     }
   };
 
-  const gerarMensalidadeMesAtual = async () => {
+  const gerarMensalidadePeriodo = async (e: React.FormEvent) => {
+    e.preventDefault();
     if (associados.length === 0) {
       return alert('Aguarde carregar a lista de associados ou verifique se existem associados cadastrados.');
     }
 
-    if (!confirm('Deseja gerar a mensalidade do mês atual para todos os associados ATIVOS?')) return;
+    if (!confirm(`Deseja gerar a mensalidade de ${String(generateForm.month).padStart(2, '0')}/${generateForm.year} no valor de ${formatBRL(generateForm.amount)} para todos os associados ATIVOS?`)) return;
     
     setActionLoading('gerar_mensalidades');
     try {
@@ -404,10 +413,9 @@ export default function AdminDashboard() {
         return;
       }
 
-      const hoje = new Date();
-      const mes = hoje.getMonth() + 1;
-      const ano = hoje.getFullYear();
-      const valorBase = 50.00; // Valor padrão
+      const mes = generateForm.month;
+      const ano = generateForm.year;
+      const valorBase = generateForm.amount;
       
       let count = 0;
       const inserts = [];
@@ -433,9 +441,10 @@ export default function AdminDashboard() {
         if (error) throw error;
         alert(`${count} mensalidades geradas com sucesso!`);
       } else {
-        alert('Todas as mensalidades do mês atual já foram geradas previamente. Nenhuma nova mensalidade foi criada.');
+        alert(`Todas as mensalidades de ${String(mes).padStart(2, '0')}/${ano} já foram geradas previamente. Nenhuma nova mensalidade foi criada.`);
       }
       
+      setShowGenerateModal(false);
       await fetchData(true);
     } catch (err: any) {
       console.error("ERRO COMPLETO:", err);
@@ -1233,7 +1242,7 @@ export default function AdminDashboard() {
                           Lançar Pagamento
                         </button>
                         <button
-                          onClick={gerarMensalidadeMesAtual}
+                          onClick={() => setShowGenerateModal(true)}
                           disabled={actionLoading === 'gerar_mensalidades'}
                           className="flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-lg font-bold text-sm tracking-wide hover:bg-blue-700 transition-all shadow-md disabled:opacity-70 active:scale-95"
                         >
@@ -1749,6 +1758,110 @@ export default function AdminDashboard() {
                     className="w-full py-3 text-slate-500 font-bold text-xs uppercase tracking-wider hover:text-slate-700 transition-colors"
                   >
                     Cancelar Operação
+                  </button>
+                </div>
+              </form>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Generate Mensalidades Modal */}
+      {showGenerateModal && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] relative"
+            style={{ width: '95%', maxWidth: '450px' }}
+          >
+            <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-blue-600 text-white shrink-0">
+              <div className="flex items-center gap-3">
+                <CreditCard className="w-6 h-6" />
+                <h3 className="text-xl font-bold font-lexend">Gerar Mensalidades</h3>
+              </div>
+              <button 
+                onClick={() => setShowGenerateModal(false)}
+                className="p-1 hover:bg-blue-500 rounded-full transition-colors flex items-center justify-center"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            
+            <div className="p-6">
+              <form onSubmit={gerarMensalidadePeriodo} className="space-y-5">
+                <div className="bg-blue-50 border border-blue-100 p-4 rounded-xl mb-2">
+                  <p className="text-sm text-blue-800 leading-relaxed">
+                    Esta ação irá gerar cobranças <strong>Pendente</strong> para todos os associados com status <strong>Ativo</strong> que ainda não possuem registro no período selecionado.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-bold text-slate-700 mb-1.5 uppercase tracking-wide text-[10px]">Mês</label>
+                    <select 
+                      required
+                      value={generateForm.month}
+                      onChange={e => setGenerateForm({...generateForm, month: parseInt(e.target.value)})}
+                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 transition-all font-medium"
+                    >
+                      {[...Array(12)].map((_, i) => (
+                        <option key={i+1} value={i+1}>{String(i+1).padStart(2, '0')} - {new Date(2000, i).toLocaleString('pt-BR', { month: 'long' })}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-slate-700 mb-1.5 uppercase tracking-wide text-[10px]">Ano</label>
+                    <select 
+                      required
+                      value={generateForm.year}
+                      onChange={e => setGenerateForm({...generateForm, year: parseInt(e.target.value)})}
+                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 transition-all font-medium"
+                    >
+                      {[...Array(5)].map((_, i) => {
+                        const year = new Date().getFullYear() - 2 + i;
+                        return <option key={year} value={year}>{year}</option>
+                      })}
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-1.5 uppercase tracking-wide text-[10px]">Valor da Mensalidade</label>
+                  <div className="relative">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">R$</span>
+                    <input 
+                      type="number" 
+                      step="0.01"
+                      min="0"
+                      required
+                      value={generateForm.amount}
+                      onChange={e => setGenerateForm({...generateForm, amount: parseFloat(e.target.value)})}
+                      className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 font-black text-xl text-slate-800"
+                    />
+                  </div>
+                  <p className="text-[10px] text-slate-400 mt-2 italic px-1">O valor padrão é R$ 60,00, mas você pode ajustar conforme necessário.</p>
+                </div>
+
+                <div className="pt-6 border-t border-slate-100 flex flex-col gap-3">
+                  <button
+                    type="submit"
+                    disabled={actionLoading === 'gerar_mensalidades'}
+                    className="w-full bg-blue-600 text-white font-black py-4 rounded-xl shadow-lg hover:bg-blue-700 hover:shadow-blue-200/50 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-3 uppercase tracking-wider text-xs"
+                  >
+                    {actionLoading === 'gerar_mensalidades' ? (
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                    ) : (
+                      <CheckCircle2 className="w-5 h-5" />
+                    )}
+                    Confirmar e Gerar Cobranças
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowGenerateModal(false)}
+                    className="w-full bg-slate-100 text-slate-600 font-bold py-3 rounded-xl hover:bg-slate-200 transition-all text-xs uppercase"
+                  >
+                    Cancelar
                   </button>
                 </div>
               </form>
