@@ -560,6 +560,24 @@ export default function AdminDashboard() {
     }
   };
 
+  const deleteMensalidade = async (id: string) => {
+    if (!confirm('Deseja realmente excluir esta mensalidade?')) return;
+    setActionLoading(id);
+    try {
+      const { error } = await supabase
+        .from('mensalidades')
+        .delete()
+        .eq('id', id);
+      if (error) throw error;
+      await fetchData(true);
+    } catch (err: any) {
+      console.error('Erro ao excluir mensalidade:', err);
+      alert(`Erro ao excluir: ${err.message || 'Verifique sua conexão ou permissões.'}`);
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
   const saveVideo = async (e: React.FormEvent) => {
     e.preventDefault();
     setActionLoading('save_video');
@@ -1284,6 +1302,7 @@ export default function AdminDashboard() {
                               <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Valor</th>
                               <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Status</th>
                               <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Pagamento</th>
+                              <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Ações</th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-slate-100">
@@ -1322,6 +1341,20 @@ export default function AdminDashboard() {
                                       <span>{m.payment_date ? new Date(m.payment_date).toLocaleDateString('pt-BR') : '-'}</span>
                                       {/* No receipt_url in schema */}
                                     </div>
+                                  </td>
+                                  <td className="px-6 py-4 text-right">
+                                    <button
+                                      onClick={() => deleteMensalidade(m.id)}
+                                      disabled={actionLoading === m.id}
+                                      className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all border border-transparent hover:border-red-100"
+                                      title="Excluir Mensalidade"
+                                    >
+                                      {actionLoading === m.id ? (
+                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                      ) : (
+                                        <Trash2 className="w-4 h-4" />
+                                      )}
+                                    </button>
                                   </td>
                                 </tr>
                               ))
