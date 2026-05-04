@@ -849,8 +849,14 @@ export default function PainelAssociado() {
                         disabled={loading || !newPassword || !confirmPassword}
                         className="w-full sm:w-auto min-w-[240px] bg-primary text-white py-4 px-8 rounded-xl font-black uppercase text-sm hover:shadow-xl hover:scale-[1.02] transition-all flex items-center justify-center gap-3 disabled:opacity-50 active:scale-95"
                       >
-                        {loading && <Loader2 className="w-4 h-4 animate-spin" />}
-                        Atualizar Minha Senha
+                        {loading ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            Atualizando...
+                          </>
+                        ) : (
+                          "Atualizar Minha Senha"
+                        )}
                       </button>
                     </div>
                   </form>

@@ -289,7 +289,7 @@ export default function AdminDashboard() {
       await fetchData(true);
     } catch (err) {
       console.error(err);
-      alert('Erro ao aprovar mensalidade');
+      safeAlert('Erro ao aprovar mensalidade');
     } finally {
       setActionLoading(null);
     }
@@ -309,7 +309,7 @@ export default function AdminDashboard() {
       await fetchData(true);
     } catch (err) {
       console.error(err);
-      alert('Erro ao rejeitar mensalidade');
+      safeAlert('Erro ao rejeitar mensalidade');
     } finally {
       setActionLoading(null);
     }
@@ -317,7 +317,7 @@ export default function AdminDashboard() {
 
   const recordManualPayment = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!paymentForm.associado_id) return alert('Selecione um associado');
+    if (!paymentForm.associado_id) return safeAlert('Selecione um associado');
     
     setActionLoading('manual_payment');
     try {
@@ -369,11 +369,11 @@ export default function AdminDashboard() {
         payment_method: 'Pix'
       });
       await fetchData(true);
-      alert('Pagamento registrado com sucesso!');
+      safeAlert('Pagamento registrado com sucesso!');
     } catch (err: any) {
       console.error("ERRO COMPLETO AO REGISTRAR:", err);
       const errorMessage = err.message || err.details || 'Erro desconhecido';
-      alert(`Erro ao registrar pagamento: ${errorMessage}`);
+      safeAlert(`Erro ao registrar pagamento: ${errorMessage}`);
     } finally {
       setActionLoading(null);
     }
@@ -397,19 +397,22 @@ export default function AdminDashboard() {
     }
   };
 
+  const safeAlert = (msg: string) => {
+    try { window.alert(msg); } catch (e) { console.log(msg); }
+  };
+
   const gerarMensalidadePeriodo = async (e: React.FormEvent) => {
     e.preventDefault();
     if (associados.length === 0) {
-      return alert('Aguarde carregar a lista de associados ou verifique se existem associados cadastrados.');
+      safeAlert('Aguarde carregar a lista de associados ou verifique se existem associados cadastrados.');
+      return;
     }
-
-    if (!confirm(`Deseja gerar a mensalidade de ${String(generateForm.month).padStart(2, '0')}/${generateForm.year} no valor de ${formatBRL(generateForm.amount)} para todos os associados ATIVOS?`)) return;
     
     setActionLoading('gerar_mensalidades');
     try {
       const ativos = associados.filter(a => a.status === 'ativo');
       if (ativos.length === 0) {
-        alert('Não há associados com status ATIVO para gerar mensalidades.');
+        safeAlert('Não há associados com status ATIVO para gerar mensalidades.');
         return;
       }
 
@@ -439,16 +442,16 @@ export default function AdminDashboard() {
       if (inserts.length > 0) {
         const { error } = await supabase.from('mensalidades').insert(inserts);
         if (error) throw error;
-        alert(`${count} mensalidades geradas com sucesso!`);
+        safeAlert(`${count} mensalidades geradas com sucesso!`);
       } else {
-        alert(`Todas as mensalidades de ${String(mes).padStart(2, '0')}/${ano} já foram geradas previamente. Nenhuma nova mensalidade foi criada.`);
+        safeAlert(`Todas as mensalidades de ${String(mes).padStart(2, '0')}/${ano} já foram geradas previamente. Nenhuma nova mensalidade foi criada.`);
       }
       
       setShowGenerateModal(false);
       await fetchData(true);
     } catch (err: any) {
       console.error("ERRO COMPLETO:", err);
-      alert(`Erro ao gerar mensalidades: ${err?.message || err}`);
+      safeAlert(`Erro ao gerar mensalidades: ${err?.message || err}`);
     } finally {
       setActionLoading(null);
     }
@@ -560,8 +563,12 @@ export default function AdminDashboard() {
     }
   };
 
+  const safeConfirm = (msg: string) => {
+    try { return window.confirm(msg); } catch (e) { return true; }
+  };
+
   const deleteMensalidade = async (id: string) => {
-    if (!confirm('Deseja realmente excluir esta mensalidade?')) return;
+    if (!safeConfirm('Deseja realmente excluir esta mensalidade?')) return;
     setActionLoading(id);
     try {
       const { error } = await supabase
@@ -572,7 +579,7 @@ export default function AdminDashboard() {
       await fetchData(true);
     } catch (err: any) {
       console.error('Erro ao excluir mensalidade:', err);
-      alert(`Erro ao excluir: ${err.message || 'Verifique sua conexão ou permissões.'}`);
+      safeAlert(`Erro ao excluir: ${err.message || 'Verifique sua conexão ou permissões.'}`);
     } finally {
       setActionLoading(null);
     }
@@ -830,10 +837,10 @@ export default function AdminDashboard() {
       setShowAssociadoModal(false);
       setEditingAssociado(null);
       await fetchData();
-      alert('Associado atualizado com sucesso!');
+      safeAlert('Associado atualizado com sucesso!');
     } catch (err) {
       console.error(err);
-      alert('Erro ao atualizar associado.');
+      safeAlert('Erro ao atualizar associado.');
     } finally {
       setActionLoading(null);
     }
@@ -1294,73 +1301,128 @@ export default function AdminDashboard() {
                       </div>
                       
                       <div className="flex-1 overflow-auto">
-                        <table className="w-full text-left border-collapse">
-                          <thead className="bg-slate-50 border-b border-slate-200 sticky top-0 z-10">
-                            <tr>
-                              <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Associado</th>
-                              <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Referência</th>
-                              <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Valor</th>
-                              <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Status</th>
-                              <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Pagamento</th>
-                              <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Ações</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-slate-100">
-                            {filteredHistorico.length === 0 ? (
+                        <div className="hidden md:block">
+                          <table className="w-full text-left border-collapse">
+                            <thead className="bg-slate-50 border-b border-slate-200 sticky top-0 z-10">
                               <tr>
-                                <td colSpan={5} className="px-6 py-12 text-center text-slate-500 italic">
-                                  Nenhum registro financeiro encontrado.
-                                </td>
+                                <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Associado</th>
+                                <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Referência</th>
+                                <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Valor</th>
+                                <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Status</th>
+                                <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Pagamento</th>
+                                <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Ações</th>
                               </tr>
-                            ) : (
-                              filteredHistorico.map((m) => (
-                                <tr key={m.id} className="hover:bg-slate-50 group transition-colors">
-                                  <td className="px-6 py-4">
-                                    <p className="font-bold text-slate-800 text-sm">{m.associados?.popular_name || m.associados?.full_name}</p>
-                                    <p className="text-xs text-slate-500">{m.associados?.email}</p>
-                                  </td>
-                                  <td className="px-6 py-4 text-sm text-slate-600 text-center font-medium">
-                                    <span className="bg-slate-100 px-2 py-1 rounded text-xs">
-                                      {String(m.month).padStart(2, '0')}/{m.year}
-                                    </span>
-                                  </td>
-                                  <td className="px-6 py-4 text-sm font-bold text-slate-700">
-                                    {formatBRL(m.amount)}
-                                  </td>
-                                  <td className="px-6 py-4">
-                                    <span className={`inline-flex items-center px-2 py-1 rounded-md text-[10px] font-black border uppercase tracking-tighter ${
-                                      m.status === 'paga' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 
-                                      m.status === 'pendente' ? 'bg-amber-50 text-amber-700 border-amber-200' : 
-                                      'bg-red-50 text-red-700 border-red-200'
-                                    }`}>
-                                      {m.status === 'paga' ? 'Pago ✓' : m.status}
-                                    </span>
-                                  </td>
-                                  <td className="px-6 py-4 text-sm text-slate-500 text-right font-medium">
-                                    <div className="flex flex-col items-end">
-                                      <span>{m.payment_date ? new Date(m.payment_date).toLocaleDateString('pt-BR') : '-'}</span>
-                                      {/* No receipt_url in schema */}
-                                    </div>
-                                  </td>
-                                  <td className="px-6 py-4 text-right">
-                                    <button
-                                      onClick={() => deleteMensalidade(m.id)}
-                                      disabled={actionLoading === m.id}
-                                      className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all border border-transparent hover:border-red-100"
-                                      title="Excluir Mensalidade"
-                                    >
-                                      {actionLoading === m.id ? (
-                                        <Loader2 className="w-4 h-4 animate-spin" />
-                                      ) : (
-                                        <Trash2 className="w-4 h-4" />
-                                      )}
-                                    </button>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100">
+                              {filteredHistorico.length === 0 ? (
+                                <tr>
+                                  <td colSpan={6} className="px-6 py-12 text-center text-slate-500 italic">
+                                    Nenhum registro financeiro encontrado.
                                   </td>
                                 </tr>
-                              ))
-                            )}
-                          </tbody>
-                        </table>
+                              ) : (
+                                filteredHistorico.map((m) => (
+                                  <tr key={m.id} className="hover:bg-slate-50 group transition-colors">
+                                    <td className="px-6 py-4">
+                                      <p className="font-bold text-slate-800 text-sm">{m.associados?.popular_name || m.associados?.full_name}</p>
+                                      <p className="text-xs text-slate-500">{m.associados?.email}</p>
+                                    </td>
+                                    <td className="px-6 py-4 text-sm text-slate-600 text-center font-medium">
+                                      <span className="bg-slate-100 px-2 py-1 rounded text-xs">
+                                        {String(m.month).padStart(2, '0')}/{m.year}
+                                      </span>
+                                    </td>
+                                    <td className="px-6 py-4 text-sm font-bold text-slate-700">
+                                      {formatBRL(m.amount)}
+                                    </td>
+                                    <td className="px-6 py-4">
+                                      <span className={`inline-flex items-center px-2 py-1 rounded-md text-[10px] font-black border uppercase tracking-tighter ${
+                                        m.status === 'paga' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 
+                                        m.status === 'pendente' ? 'bg-amber-50 text-amber-700 border-amber-200' : 
+                                        'bg-red-50 text-red-700 border-red-200'
+                                      }`}>
+                                        {m.status === 'paga' ? 'Pago ✓' : m.status}
+                                      </span>
+                                    </td>
+                                    <td className="px-6 py-4 text-sm text-slate-500 text-right font-medium">
+                                      <div className="flex flex-col items-end">
+                                        <span>{m.payment_date ? new Date(m.payment_date).toLocaleDateString('pt-BR') : '-'}</span>
+                                      </div>
+                                    </td>
+                                    <td className="px-6 py-4 text-right">
+                                      <button
+                                        onClick={() => deleteMensalidade(m.id)}
+                                        disabled={actionLoading === m.id}
+                                        className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all border border-transparent hover:border-red-100"
+                                        title="Excluir Mensalidade"
+                                      >
+                                        {actionLoading === m.id ? (
+                                          <Loader2 className="w-4 h-4 animate-spin" />
+                                        ) : (
+                                          <Trash2 className="w-4 h-4" />
+                                        )}
+                                      </button>
+                                    </td>
+                                  </tr>
+                                ))
+                              )}
+                            </tbody>
+                          </table>
+                        </div>
+                        
+                        {/* Mobile Cards View */}
+                        <div className="md:hidden p-4 space-y-4">
+                          {filteredHistorico.length === 0 ? (
+                            <div className="text-center text-slate-500 italic py-12 bg-white rounded-lg border border-slate-200">
+                              Nenhum registro financeiro encontrado.
+                            </div>
+                          ) : (
+                            filteredHistorico.map((m) => (
+                              <div key={m.id} className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm relative pt-10">
+                                <div className="absolute top-3 left-3 bg-slate-100 text-slate-600 px-2 py-1 rounded text-xs font-bold font-mono">
+                                  {String(m.month).padStart(2, '0')}/{m.year}
+                                </div>
+                                <div className="absolute top-3 right-3 flex items-center gap-2">
+                                  <span className={`inline-flex items-center px-2 py-1 rounded-md text-[10px] font-black border uppercase tracking-tighter ${
+                                    m.status === 'paga' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 
+                                    m.status === 'pendente' ? 'bg-amber-50 text-amber-700 border-amber-200' : 
+                                    'bg-red-50 text-red-700 border-red-200'
+                                  }`}>
+                                    {m.status === 'paga' ? 'Pago ✓' : m.status}
+                                  </span>
+                                  <button
+                                    onClick={() => deleteMensalidade(m.id)}
+                                    disabled={actionLoading === m.id}
+                                    className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all border border-transparent hover:border-red-100"
+                                    title="Excluir Mensalidade"
+                                  >
+                                    {actionLoading === m.id ? (
+                                      <Loader2 className="w-4 h-4 animate-spin" />
+                                    ) : (
+                                      <Trash2 className="w-4 h-4" />
+                                    )}
+                                  </button>
+                                </div>
+
+                                <div className="mb-4">
+                                  <p className="font-bold text-slate-800 text-sm leading-tight pr-12">{m.associados?.popular_name || m.associados?.full_name}</p>
+                                  <p className="text-xs text-slate-500 mt-0.5">{m.associados?.email}</p>
+                                </div>
+                                
+                                <div className="flex justify-between items-end border-t border-slate-100 pt-3">
+                                  <div>
+                                    <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-0.5">Valor</p>
+                                    <p className="text-base font-black text-slate-800">{formatBRL(m.amount)}</p>
+                                  </div>
+                                  <div className="text-right">
+                                    <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-0.5">Data Pgmt</p>
+                                    <p className="text-sm font-medium text-slate-600">{m.payment_date ? new Date(m.payment_date).toLocaleDateString('pt-BR') : '-'}</p>
+                                  </div>
+                                </div>
+                              </div>
+                            ))
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>

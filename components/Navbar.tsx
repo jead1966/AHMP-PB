@@ -71,7 +71,7 @@ export function Navbar() {
 
   return (
     <>
-      <header className="docked full-width top-0 border-b-2 border-slate-200 dark:border-blue-800 bg-white dark:bg-blue-950 shadow-sm dark:shadow-none z-50 sticky">
+      <header className="docked full-width top-0 border-b-2 border-[#001640] bg-[#002366] shadow-sm z-50 sticky">
       <div className="flex justify-between items-center w-full px-8 py-2 max-w-[1400px] mx-auto">
         <div className="flex items-center gap-6">
           <Link href="/" className="flex items-center">
@@ -90,8 +90,8 @@ export function Navbar() {
               href="/"
               className={`font-lexend tracking-tight font-bold text-sm uppercase transition-all duration-200 ${
                 isActive('/') 
-                  ? 'text-orange-500 dark:text-orange-400 border-b-2 border-orange-500 pb-1' 
-                  : 'text-slate-700 dark:text-slate-300 hover:text-orange-500 hover:bg-slate-50 dark:hover:bg-blue-900'
+                  ? 'text-white border-b-2 border-white pb-1' 
+                  : 'text-white/80 hover:text-white'
               }`}
             >
               Início
@@ -100,8 +100,8 @@ export function Navbar() {
               href="/institucional"
               className={`font-lexend tracking-tight font-bold text-sm uppercase transition-all duration-200 ${
                 isActive('/institucional') 
-                  ? 'text-orange-500 dark:text-orange-400 border-b-2 border-orange-500 pb-1' 
-                  : 'text-slate-700 dark:text-slate-300 hover:text-orange-500 hover:bg-slate-50 dark:hover:bg-blue-900'
+                  ? 'text-white border-b-2 border-white pb-1' 
+                  : 'text-white/80 hover:text-white'
               }`}
             >
               Institucional
@@ -110,8 +110,8 @@ export function Navbar() {
               href="/contato"
               className={`font-lexend tracking-tight font-bold text-sm uppercase transition-all duration-200 ${
                 isActive('/contato') 
-                  ? 'text-orange-500 dark:text-orange-400 border-b-2 border-orange-500 pb-1' 
-                  : 'text-slate-700 dark:text-slate-300 hover:text-orange-500 hover:bg-slate-50 dark:hover:bg-blue-900'
+                  ? 'text-white border-b-2 border-white pb-1' 
+                  : 'text-white/80 hover:text-white'
               }`}
             >
               Contato
@@ -119,14 +119,14 @@ export function Navbar() {
           </nav>
         </div>
         <div className="flex items-center gap-1 sm:gap-4">
-          <div className="flex items-center gap-2 sm:gap-4 mr-2 sm:mr-4 border-r border-slate-200 pr-2 sm:pr-4">
+          <div className="flex items-center gap-2 sm:gap-4 mr-2 sm:mr-4 border-r border-[#001640] pr-2 sm:pr-4">
             {!loading && (
               <>
                 {user ? (
                   <Link
                     href="/painel-associado"
                     className={`flex items-center gap-2 font-lexend font-bold text-xs uppercase transition-all duration-200 py-2 px-2 sm:px-3 rounded-lg ${
-                      isActive('/painel-associado') ? 'bg-orange-500 text-white shadow-sm' : 'text-white md:text-slate-700 hover:text-orange-500 hover:bg-slate-50'
+                      isActive('/painel-associado') ? 'bg-orange-500 text-white shadow-sm' : 'text-white hover:bg-[#001640]'
                     }`}
                   >
                     <LayoutDashboard className="w-5 h-5 sm:w-4 sm:h-4" />
@@ -136,7 +136,7 @@ export function Navbar() {
                   <Link
                     href="/login"
                     className={`flex items-center gap-2 font-lexend font-bold text-xs uppercase transition-all duration-200 py-2 px-2 sm:px-3 rounded-lg ${
-                      isActive('/login') ? 'bg-orange-500 text-white shadow-sm' : 'text-white md:text-slate-700 hover:text-orange-500 hover:bg-slate-50'
+                      isActive('/login') ? 'bg-orange-500 text-white shadow-sm' : 'text-white hover:bg-[#001640]'
                     }`}
                   >
                     <User className="w-5 h-5 sm:w-4 sm:h-4" />
@@ -148,15 +148,8 @@ export function Navbar() {
           </div>
 
           <div className="flex items-center gap-2 sm:gap-4">
-            <button className="text-white md:text-slate-700 hover:text-orange-500 transition-colors p-2 rounded-full hover:bg-slate-100">
-              <Search className="w-5 h-5" />
-            </button>
-            <button onClick={() => setShowAdminModal(true)} className="text-white md:text-slate-700 hover:text-orange-500 transition-colors p-2 rounded-full hover:bg-slate-100">
+            <button onClick={() => setShowAdminModal(true)} className="text-white hover:bg-[#001640] transition-colors p-2 rounded-full">
               <Lock className="w-5 h-5" />
-            </button>
-            <button className="text-white md:text-slate-700 hover:text-orange-500 transition-colors p-2 rounded-full hover:bg-slate-100 relative">
-              <Bell className="w-5 h-5" />
-              <span className="absolute top-1 right-1 w-2 h-2 bg-orange-500 rounded-full border-2 border-white"></span>
             </button>
             
             {!user && (
@@ -170,9 +163,9 @@ export function Navbar() {
 
             <button 
               onClick={() => setShowMobileMenu(!showMobileMenu)}
-              className="md:hidden text-white p-2 rounded-full hover:bg-slate-100"
+              className="md:hidden text-white p-2 rounded-full hover:bg-[#001640]"
             >
-              {showMobileMenu ? <X className="w-6 h-6 text-slate-800" /> : <Menu className="w-6 h-6" />}
+              {showMobileMenu ? <X className="w-6 h-6 text-white" /> : <Menu className="w-6 h-6" />}
             </button>
           </div>
         </div>
