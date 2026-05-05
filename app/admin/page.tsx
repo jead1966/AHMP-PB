@@ -815,32 +815,38 @@ export default function AdminDashboard() {
     setActionLoading('save_associado');
     try {
       if (editingAssociado) {
+        const payload = {
+          full_name: associadoForm.full_name,
+          popular_name: associadoForm.popular_name,
+          email: associadoForm.email,
+          phone: associadoForm.phone || null,
+          document_id: associadoForm.document_id || null,
+          identity_document: associadoForm.identity_document || null,
+          birthday: associadoForm.birthday || null,
+          category: associadoForm.category || null,
+          position: associadoForm.position || null,
+          club: associadoForm.club || null,
+          photo_url: associadoForm.photo_url || null
+        };
+
         const { error } = await supabase
           .from('associados')
-          .update({
-            full_name: associadoForm.full_name,
-            popular_name: associadoForm.popular_name,
-            email: associadoForm.email,
-            phone: associadoForm.phone,
-            document_id: associadoForm.document_id,
-            identity_document: associadoForm.identity_document,
-            birthday: associadoForm.birthday,
-            category: associadoForm.category,
-            position: associadoForm.position,
-            club: associadoForm.club,
-            photo_url: associadoForm.photo_url
-          })
-          .eq('id', editingAssociado.id);
-        if (error) throw error;
+          .update(payload)
+          .eq('user_id', editingAssociado.user_id);
+        
+        if (error) {
+          console.error("Erro Supabase:", error);
+          throw new Error(error.message);
+        }
       }
       
       setShowAssociadoModal(false);
       setEditingAssociado(null);
       await fetchData();
       safeAlert('Associado atualizado com sucesso!');
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      safeAlert('Erro ao atualizar associado.');
+      safeAlert('Erro ao atualizar associado: ' + (err.message || 'Verifique sua conexão ou permissões.'));
     } finally {
       setActionLoading(null);
     }

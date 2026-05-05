@@ -4,12 +4,7 @@ import Image from 'next/image';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Trophy, Activity, Medal, ChevronRight, Play, ArrowRight, Loader2, X } from 'lucide-react';
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+import { supabase } from '@/lib/supabase';
 
 export default function Home() {
   const [noticias, setNoticias] = useState<any[]>([]);
