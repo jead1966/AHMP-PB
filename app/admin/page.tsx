@@ -815,7 +815,9 @@ export default function AdminDashboard() {
     setActionLoading('save_associado');
     try {
       if (editingAssociado) {
-        const payload = {
+        // Construct payload without photo_url if it's empty and we don't want to force it
+        // but if it's an update, null is usually preferred to clear it
+        const payload: any = {
           full_name: associadoForm.full_name,
           popular_name: associadoForm.popular_name,
           email: associadoForm.email,
@@ -825,9 +827,15 @@ export default function AdminDashboard() {
           birthday: associadoForm.birthday || null,
           category: associadoForm.category || null,
           position: associadoForm.position || null,
-          club: associadoForm.club || null,
-          photo_url: associadoForm.photo_url || null
+          club: associadoForm.club || null
         };
+
+        // Only include photo_url if it has a value or we want to clear it
+        if (associadoForm.photo_url) {
+          payload.photo_url = associadoForm.photo_url;
+        } else {
+          payload.photo_url = null; // or just omit if null is problematic
+        }
 
         const { error } = await supabase
           .from('associados')
@@ -846,7 +854,7 @@ export default function AdminDashboard() {
       safeAlert('Associado atualizado com sucesso!');
     } catch (err: any) {
       console.error(err);
-      safeAlert('Erro ao atualizar associado: ' + (err.message || 'Verifique sua conexão ou permissões.'));
+      safeAlert('Erro ao atualizar associado: ' + (err.message || 'Verifique se todos os campos estão corretos.'));
     } finally {
       setActionLoading(null);
     }
@@ -1139,87 +1147,156 @@ export default function AdminDashboard() {
                     </div>
                     
                     <div className="flex-1 overflow-auto">
-                      <table className="w-full text-left border-collapse">
-                        <thead className="bg-slate-50 border-b border-slate-200 sticky top-0 z-10">
-                          <tr>
-                            <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Nome</th>
-                            <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Contato / Categoria</th>
-                            <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Status</th>
-                            <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Ações</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100">
-                          {filteredAssociados.length === 0 ? (
+                      {/* Desktop Table View */}
+                      <div className="hidden md:block">
+                        <table className="w-full text-left border-collapse">
+                          <thead className="bg-slate-50 border-b border-slate-200 sticky top-0 z-10">
                             <tr>
-                              <td colSpan={4} className="px-6 py-12 text-center text-slate-500">
-                                Nenhum associado encontrado para &quot;{searchAssociados}&quot;.
-                              </td>
+                              <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Nome</th>
+                              <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Contato / Categoria</th>
+                              <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Status</th>
+                              <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Ações</th>
                             </tr>
-                          ) : (
-                            filteredAssociados.map((a) => (
-                              <tr key={a.id} className="hover:bg-slate-50/50 transition-colors group">
-                                <td className="px-6 py-4">
-                                  <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-full bg-slate-200 flex flex-shrink-0 items-center justify-center text-slate-500 font-bold text-sm uppercase overflow-hidden relative">
-                                      {a.photo_url ? (
-                                        <Image fill src={`${a.photo_url}?t=${new Date().getTime()}`} alt="" className="object-cover" referrerPolicy="no-referrer" />
-                                      ) : (
-                                        a.full_name?.charAt(0) || '?'
-                                      )}
-                                    </div>
-                                    <div>
-                                      <p className="font-bold text-slate-800 text-sm">{a.full_name}</p>
-                                      <p className="text-xs text-slate-500">Apelido: {a.popular_name || '-'}</p>
-                                    </div>
-                                  </div>
-                                </td>
-                                <td className="px-6 py-4">
-                                  <p className="text-sm text-slate-700">{a.email}</p>
-                                  <p className="text-xs text-slate-500 mt-0.5">{a.category || '-'} • {a.position || '-'}</p>
-                                </td>
-                                <td className="px-6 py-4">
-                                  <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-bold border ${
-                                    a.status === 'ativo' ? 'bg-green-50 text-green-700 border-green-200' : 
-                                    a.status === 'pendente' ? 'bg-orange-50 text-orange-700 border-orange-200' :
-                                    'bg-red-50 text-red-700 border-red-200'
-                                  }`}>
-                                    {a.status.toUpperCase()}
-                                  </span>
-                                </td>
-                                <td className="px-6 py-4 text-right">
-                                  <div className="flex items-center justify-end gap-2 text-right">
-                                    <button
-                                      onClick={() => openAssociadoModal(a)}
-                                      className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors border border-transparent hover:border-blue-100"
-                                      title="Editar Associado"
-                                    >
-                                      <Edit2 className="w-4 h-4" />
-                                    </button>
-                                    {a.status !== 'ativo' && (
-                                      <button 
-                                        onClick={() => updateAssociadoStatus(a.user_id, 'ativo')}
-                                        disabled={actionLoading === a.user_id}
-                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-lg text-xs font-bold transition-colors border border-blue-100 disabled:opacity-50"
-                                      >
-                                        <Check className="w-3.5 h-3.5" /> Aprovar
-                                      </button>
-                                    )}
-                                    {a.status === 'ativo' && (
-                                      <button 
-                                        onClick={() => updateAssociadoStatus(a.user_id, 'inativo')}
-                                        disabled={actionLoading === a.user_id}
-                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white text-slate-600 hover:bg-red-50 hover:text-red-700 rounded-lg text-xs font-bold transition-colors border border-slate-200 hover:border-red-200 disabled:opacity-50 opacity-0 group-hover:opacity-100"
-                                      >
-                                        <X className="w-3.5 h-3.5" /> Inativar
-                                      </button>
-                                    )}
-                                  </div>
+                          </thead>
+                          <tbody className="divide-y divide-slate-100">
+                            {filteredAssociados.length === 0 ? (
+                              <tr>
+                                <td colSpan={4} className="px-6 py-12 text-center text-slate-500">
+                                  Nenhum associado encontrado para &quot;{searchAssociados}&quot;.
                                 </td>
                               </tr>
-                            ))
-                          )}
-                        </tbody>
-                      </table>
+                            ) : (
+                              filteredAssociados.map((a) => (
+                                <tr key={a.id} className="hover:bg-slate-50/50 transition-colors group">
+                                  <td className="px-6 py-4">
+                                    <div className="flex items-center gap-3">
+                                      <div className="w-10 h-10 rounded-full bg-slate-200 flex flex-shrink-0 items-center justify-center text-slate-500 font-bold text-sm uppercase overflow-hidden relative">
+                                        {a.photo_url ? (
+                                          <Image fill src={`${a.photo_url}?t=${new Date().getTime()}`} alt="" className="object-cover" referrerPolicy="no-referrer" />
+                                        ) : (
+                                          a.full_name?.charAt(0) || '?'
+                                        )}
+                                      </div>
+                                      <div>
+                                        <p className="font-bold text-slate-800 text-sm">{a.full_name}</p>
+                                        <p className="text-xs text-slate-500">Apelido: {a.popular_name || '-'}</p>
+                                      </div>
+                                    </div>
+                                  </td>
+                                  <td className="px-6 py-4">
+                                    <p className="text-sm text-slate-700">{a.email}</p>
+                                    <p className="text-xs text-slate-500 mt-0.5">{a.category || '-'} • {a.position || '-'}</p>
+                                  </td>
+                                  <td className="px-6 py-4">
+                                    <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-bold border ${
+                                      a.status === 'ativo' ? 'bg-green-50 text-green-700 border-green-200' : 
+                                      a.status === 'pendente' ? 'bg-orange-50 text-orange-700 border-orange-200' :
+                                      'bg-red-50 text-red-700 border-red-200'
+                                    }`}>
+                                      {a.status.toUpperCase()}
+                                    </span>
+                                  </td>
+                                  <td className="px-6 py-4 text-right">
+                                    <div className="flex items-center justify-end gap-2 text-right">
+                                      <button
+                                        onClick={() => openAssociadoModal(a)}
+                                        className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors border border-transparent hover:border-blue-100"
+                                        title="Editar Associado"
+                                      >
+                                        <Edit2 className="w-4 h-4" />
+                                      </button>
+                                      {a.status !== 'ativo' && (
+                                        <button 
+                                          onClick={() => updateAssociadoStatus(a.user_id, 'ativo')}
+                                          disabled={actionLoading === a.user_id}
+                                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-lg text-xs font-bold transition-colors border border-blue-100 disabled:opacity-50"
+                                        >
+                                          <Check className="w-3.5 h-3.5" /> Aprovar
+                                        </button>
+                                      )}
+                                      {a.status === 'ativo' && (
+                                        <button 
+                                          onClick={() => updateAssociadoStatus(a.user_id, 'inativo')}
+                                          disabled={actionLoading === a.user_id}
+                                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white text-slate-600 hover:bg-red-50 hover:text-red-700 rounded-lg text-xs font-bold transition-colors border border-slate-200 hover:border-red-200 disabled:opacity-50 md:opacity-0 md:group-hover:opacity-100"
+                                        >
+                                          <X className="w-3.5 h-3.5" /> Inativar
+                                        </button>
+                                      )}
+                                    </div>
+                                  </td>
+                                </tr>
+                              ))
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
+
+                      {/* Mobile Card View */}
+                      <div className="md:hidden p-4 space-y-4">
+                        {filteredAssociados.length === 0 ? (
+                          <div className="bg-white p-12 text-center text-slate-500 rounded-xl border border-slate-200">
+                             Nenhum associado encontrado.
+                          </div>
+                        ) : (
+                          filteredAssociados.map((a) => (
+                            <div key={a.id} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-4">
+                              <div className="flex items-center gap-3">
+                                <div className="w-12 h-12 rounded-full bg-slate-200 flex flex-shrink-0 items-center justify-center text-slate-500 font-bold text-lg uppercase overflow-hidden relative">
+                                  {a.photo_url ? (
+                                    <Image fill src={`${a.photo_url}?t=${new Date().getTime()}`} alt="" className="object-cover" referrerPolicy="no-referrer" />
+                                  ) : (
+                                    a.full_name?.charAt(0) || '?'
+                                  )}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="font-bold text-slate-800 text-sm truncate">{a.full_name}</p>
+                                  <p className="text-xs text-slate-500 truncate">{a.email}</p>
+                                </div>
+                                <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-black border uppercase tracking-tighter ${
+                                  a.status === 'ativo' ? 'bg-green-50 text-green-700 border-green-200' : 
+                                  a.status === 'pendente' ? 'bg-orange-50 text-orange-700 border-orange-200' :
+                                  'bg-red-50 text-red-700 border-red-200'
+                                }`}>
+                                  {a.status}
+                                </span>
+                              </div>
+                              
+                              <div className="flex items-center justify-between pt-3 border-t border-slate-100">
+                                <div className="text-xs text-slate-500">
+                                  <span className="font-bold">{a.category || '-'}</span> • {a.position || '-'}
+                                </div>
+                                <div className="flex gap-2">
+                                  <button
+                                    onClick={() => openAssociadoModal(a)}
+                                    className="p-2.5 bg-slate-50 text-blue-600 rounded-lg hover:bg-blue-50 transition-colors border border-slate-200"
+                                  >
+                                    <Edit2 className="w-4 h-4" />
+                                  </button>
+                                  {a.status !== 'ativo' && (
+                                    <button 
+                                      onClick={() => updateAssociadoStatus(a.user_id, 'ativo')}
+                                      disabled={actionLoading === a.user_id}
+                                      className="px-3 py-2 bg-blue-600 text-white rounded-lg text-xs font-bold flex items-center gap-1.5"
+                                    >
+                                      <Check className="w-4 h-4" /> Aprovar
+                                    </button>
+                                  )}
+                                  {a.status === 'ativo' && (
+                                    <button 
+                                      onClick={() => updateAssociadoStatus(a.user_id, 'inativo')}
+                                      disabled={actionLoading === a.user_id}
+                                      className="px-3 py-2 bg-red-50 text-red-600 rounded-lg text-xs font-bold flex items-center gap-1.5 border border-red-100"
+                                    >
+                                      <X className="w-4 h-4" /> Inativar
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          ))
+                        )}
+                      </div>
                     </div>
                   </div>
                 )}
