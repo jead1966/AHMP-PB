@@ -830,18 +830,32 @@ export default function AdminDashboard() {
           club: associadoForm.club || null
         };
 
-        // Only include photo_url if it has a value or we want to clear it
-        if (associadoForm.photo_url) {
+        // Only include photo_url if it has a value
+        // This avoids errors if the column is missing in some environments
+        // and we are not trying to set it.
+        if (associadoForm.photo_url && associadoForm.photo_url.trim() !== '') {
           payload.photo_url = associadoForm.photo_url;
-        } else {
-          payload.photo_url = null; // or just omit if null is problematic
         }
 
-        const { error } = await supabase
+        let { error } = await supabase
           .from('associados')
           .update(payload)
           .eq('user_id', editingAssociado.user_id);
         
+        // Robust handling: if photo_url column is missing in the DB, retry without it
+        if (error && error.message.includes("photo_url") && error.message.includes("column")) {
+          console.warn("photo_url column missing, retrying without it...");
+          const fallbackPayload = { ...payload };
+          delete fallbackPayload.photo_url;
+          
+          const { error: retryError } = await supabase
+            .from('associados')
+            .update(fallbackPayload)
+            .eq('user_id', editingAssociado.user_id);
+          
+          error = retryError;
+        }
+
         if (error) {
           console.error("Erro Supabase:", error);
           throw new Error(error.message);
@@ -1146,9 +1160,9 @@ export default function AdminDashboard() {
                       </div>
                     </div>
                     
-                    <div className="flex-1 overflow-auto">
+                    <div className="flex-1 overflow-x-auto overflow-y-auto">
                       {/* Desktop Table View */}
-                      <div className="hidden md:block">
+                      <div className="hidden md:block min-w-[800px]">
                         <table className="w-full text-left border-collapse">
                           <thead className="bg-slate-50 border-b border-slate-200 sticky top-0 z-10">
                             <tr>
@@ -1218,7 +1232,7 @@ export default function AdminDashboard() {
                                         <button 
                                           onClick={() => updateAssociadoStatus(a.user_id, 'inativo')}
                                           disabled={actionLoading === a.user_id}
-                                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white text-slate-600 hover:bg-red-50 hover:text-red-700 rounded-lg text-xs font-bold transition-colors border border-slate-200 hover:border-red-200 disabled:opacity-50 md:opacity-0 md:group-hover:opacity-100"
+                                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white text-slate-600 hover:bg-red-50 hover:text-red-700 rounded-lg text-xs font-bold transition-colors border border-slate-200 hover:border-red-200 disabled:opacity-50"
                                         >
                                           <X className="w-3.5 h-3.5" /> Inativar
                                         </button>
@@ -1383,9 +1397,9 @@ export default function AdminDashboard() {
                         </div>
                       </div>
                       
-                      <div className="flex-1 overflow-auto">
-                        <div className="hidden md:block">
-                          <table className="w-full text-left border-collapse">
+                    <div className="flex-1 overflow-x-auto overflow-y-auto">
+                      <div className="hidden md:block min-w-[900px]">
+                        <table className="w-full text-left border-collapse">
                             <thead className="bg-slate-50 border-b border-slate-200 sticky top-0 z-10">
                               <tr>
                                 <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Associado</th>
@@ -1752,64 +1766,109 @@ export default function AdminDashboard() {
                       </div>
                     </div>
                     
-                    <div className="flex-1 overflow-auto">
-                      <table className="w-full text-left border-collapse">
-                        <thead className="bg-slate-50 border-b border-slate-200 sticky top-0 z-10">
-                          <tr>
-                            <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Username</th>
-                            <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Perfil</th>
-                            <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Criado em</th>
-                            <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Ações</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100">
-                          {usuarios.map((u) => (
-                            <tr key={u.id} className="hover:bg-slate-50/50 transition-colors">
-                              <td className="px-6 py-4">
-                                <div className="flex items-center gap-3">
-                                  <div className="p-2 bg-slate-100 rounded-lg text-slate-500">
-                                    <Shield className="w-4 h-4" />
-                                  </div>
-                                  <span className="font-bold text-slate-800 text-sm">{u.username}</span>
-                                </div>
-                              </td>
-                              <td className="px-6 py-4">
-                                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-bold border uppercase tracking-wider ${
-                                  u.perfil === 'ADMINISTRADOR' ? 'bg-purple-50 text-purple-700 border-purple-200' : 
-                                  u.perfil === 'TECNICO' ? 'bg-blue-50 text-blue-700 border-blue-200' :
-                                  'bg-slate-50 text-slate-700 border-slate-200'
-                                }`}>
-                                  {u.perfil}
-                                </span>
-                              </td>
-                              <td className="px-6 py-4 text-xs text-slate-500">
-                                {new Date(u.created_at).toLocaleDateString('pt-BR')}
-                              </td>
-                              <td className="px-6 py-4 text-right">
-                                <div className="flex items-center justify-end gap-2">
-                                  <button
-                                    onClick={() => openUserModal(u)}
-                                    className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors border border-transparent hover:border-blue-100"
-                                    title="Editar Usuário"
-                                  >
-                                    <Edit2 className="w-4 h-4" />
-                                  </button>
-                                  {u.username !== 'admin' && (
-                                    <button
-                                      onClick={() => deleteUsuario(u.id)}
-                                      disabled={actionLoading === u.id}
-                                      className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors border border-transparent hover:border-red-100"
-                                      title="Excluir Usuário"
-                                    >
-                                      {actionLoading === u.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
-                                    </button>
-                                  )}
-                                </div>
-                              </td>
+                    <div className="flex-1 overflow-x-auto overflow-y-auto">
+                      <div className="hidden md:block min-w-[700px]">
+                        <table className="w-full text-left border-collapse">
+                          <thead className="bg-slate-50 border-b border-slate-200 sticky top-0 z-10">
+                            <tr>
+                              <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Username</th>
+                              <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Perfil</th>
+                              <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Criado em</th>
+                              <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Ações</th>
                             </tr>
-                          ))}
-                        </tbody>
-                      </table>
+                          </thead>
+                          <tbody className="divide-y divide-slate-100">
+                            {usuarios.map((u) => (
+                              <tr key={u.id} className="hover:bg-slate-50/50 transition-colors">
+                                <td className="px-6 py-4">
+                                  <div className="flex items-center gap-3">
+                                    <div className="p-2 bg-slate-100 rounded-lg text-slate-500">
+                                      <Shield className="w-4 h-4" />
+                                    </div>
+                                    <span className="font-bold text-slate-800 text-sm">{u.username}</span>
+                                  </div>
+                                </td>
+                                <td className="px-6 py-4">
+                                  <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-bold border uppercase tracking-wider ${
+                                    u.perfil === 'ADMINISTRADOR' ? 'bg-purple-50 text-purple-700 border-purple-200' : 
+                                    u.perfil === 'TECNICO' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                                    'bg-slate-50 text-slate-700 border-slate-200'
+                                  }`}>
+                                    {u.perfil}
+                                  </span>
+                                </td>
+                                <td className="px-6 py-4 text-xs text-slate-500">
+                                  {new Date(u.created_at).toLocaleDateString('pt-BR')}
+                                </td>
+                                <td className="px-6 py-4 text-right">
+                                  <div className="flex items-center justify-end gap-2">
+                                    <button
+                                      onClick={() => openUserModal(u)}
+                                      className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors border border-transparent hover:border-blue-100"
+                                      title="Editar Usuário"
+                                    >
+                                      <Edit2 className="w-4 h-4" />
+                                    </button>
+                                    {u.username !== 'admin' && (
+                                      <button
+                                        onClick={() => deleteUsuario(u.id)}
+                                        disabled={actionLoading === u.id}
+                                        className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors border border-transparent hover:border-red-100"
+                                        title="Excluir Usuário"
+                                      >
+                                        {actionLoading === u.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                                      </button>
+                                    )}
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+
+                      {/* Mobile Card View for Users */}
+                      <div className="md:hidden p-4 space-y-4">
+                        {usuarios.map((u) => (
+                          <div key={u.id} className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm space-y-4">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                <div className="p-2 bg-slate-100 rounded-lg text-slate-500">
+                                  <Shield className="w-4 h-4" />
+                                </div>
+                                <div>
+                                  <p className="font-bold text-slate-800 text-sm">{u.username}</p>
+                                  <p className="text-[10px] text-slate-400">Criado em: {new Date(u.created_at).toLocaleDateString('pt-BR')}</p>
+                                </div>
+                              </div>
+                              <span className={`inline-flex items-center px-2 py-1 rounded-md text-[10px] font-bold border uppercase ${
+                                u.perfil === 'ADMINISTRADOR' ? 'bg-purple-50 text-purple-700 border-purple-200' : 
+                                u.perfil === 'TECNICO' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                                'bg-slate-50 text-slate-700 border-slate-200'
+                              }`}>
+                                {u.perfil}
+                              </span>
+                            </div>
+                            <div className="flex justify-end gap-2 pt-3 border-t border-slate-50">
+                              <button
+                                onClick={() => openUserModal(u)}
+                                className="p-2 text-blue-600 bg-blue-50 rounded-lg border border-blue-100"
+                              >
+                                <Edit2 className="w-4 h-4" />
+                              </button>
+                              {u.username !== 'admin' && (
+                                <button
+                                  onClick={() => deleteUsuario(u.id)}
+                                  disabled={actionLoading === u.id}
+                                  className="p-2 text-red-600 bg-red-50 rounded-lg border border-red-100"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 )}
