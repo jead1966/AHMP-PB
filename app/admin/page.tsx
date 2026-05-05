@@ -2131,14 +2131,14 @@ export default function AdminDashboard() {
               <form id="edit-associado-form" onSubmit={saveAssociado} className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-4">
                   <div className="md:col-span-2">
-                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2" htmlFor="photo_url">URL da Foto</label>
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2" htmlFor="photo_url">URL da Foto (Desabilitado)</label>
                     <input 
                       name="photo_url" 
                       id="photo_url" 
-                      className="w-full rounded-xl border border-slate-300 bg-white py-3 px-4 text-slate-900 focus:ring-2 focus:ring-blue-500/20 transition-all outline-none" 
-                      value={associadoForm.photo_url}
-                      onChange={(e) => setAssociadoForm({...associadoForm, photo_url: e.target.value})}
-                      placeholder="https://..."
+                      className="w-full rounded-xl border border-slate-300 bg-slate-50 py-3 px-4 text-slate-400 focus:ring-0 cursor-not-allowed outline-none" 
+                      value="Recurso desabilitado por enquanto"
+                      disabled
+                      placeholder="Desabilitado"
                     />
                   </div>
                   <div>

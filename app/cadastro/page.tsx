@@ -217,40 +217,19 @@ export default function Cadastro() {
         )}
 
         <form className="space-y-8 mt-8" onSubmit={handleSubmit}>
-          {/* Photo Upload */}
-          <div className="flex flex-col items-center justify-center pb-6 border-b border-outline-variant/30">
-            <div className="relative group cursor-pointer" onClick={() => document.getElementById('photoInput')?.click()}>
-              <div className="w-32 h-32 rounded-full overflow-hidden bg-surface-container flex items-center justify-center border-4 border-surface-container-lowest shadow-md relative">
-                {photoPreview ? (
-                  <Image fill src={photoPreview} alt="Preview" className="object-cover" referrerPolicy="no-referrer" />
-                ) : (
-                  <>
-                    <User className="text-4xl text-outline w-12 h-12 absolute z-0" />
-                    <Image fill src="https://lh3.googleusercontent.com/aida-public/AB6AXuAuATgXfSLnQxQj-2GNUYKkQLpgQZmP56DdhvUgDbW0BtnXgGr9akJCSmVVTQCF9SKOuesL682Ur5C6WCRp7n_tNkoEU6FfC6p9PR6Zsh88p4hKwj-8xgVNSuoQoY4Gb8tL86Qgi-mPGqA72m2jJ3r4WbJjNNlyU9TXBwHfoxLqD946OaD4qen_CSepBpKo-Da9Q_ICpnWA2hlHHR1coFY-TYRYPxg2QTSP9vmNVmXQrOqd4_3eU7S5zaCevstLsGEUMNg409S7_Ow" alt="Athlete Placeholder" className="object-cover opacity-50 group-hover:opacity-30 transition-opacity z-10" referrerPolicy="no-referrer" />
-                  </>
-                )}
+          {/* Photo Upload (Disabled) */}
+          <div className="flex flex-col items-center justify-center pb-6 border-b border-outline-variant/30 opacity-60">
+            <div className="relative group cursor-not-allowed">
+              <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full overflow-hidden bg-surface-container flex items-center justify-center border-4 border-surface-container-lowest shadow-md relative">
+                <User className="text-4xl text-outline w-12 h-12" />
               </div>
-              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-20">
-                <Camera className="text-white text-3xl drop-shadow-md w-8 h-8" />
-              </div>
-              <div className="absolute bottom-0 right-0 bg-primary text-white rounded-full p-2 shadow-lg border-2 border-white z-30">
-                <Edit2 className="w-4 h-4" />
+              <div className="absolute bottom-0 right-0 bg-slate-400 text-white rounded-full p-2 shadow-lg border-2 border-white z-30">
+                <Camera className="w-4 h-4" />
               </div>
             </div>
-            <input 
-              type="file" 
-              id="photoInput" 
-              className="hidden" 
-              accept="image/*" 
-              onChange={handlePhotoChange} 
-            />
-            <button 
-              className="mt-4 font-label-bold text-label-bold text-primary hover:text-secondary-container transition-colors" 
-              type="button"
-              onClick={() => document.getElementById('photoInput')?.click()}
-            >
-              {photoFile ? 'Alterar Foto' : 'Enviar Foto do Atleta'}
-            </button>
+            <p className="mt-4 font-label-bold text-label-bold text-slate-500 italic">
+              Envio de foto desabilitado temporariamente
+            </p>
           </div>
 
           {/* Personal Data */}
