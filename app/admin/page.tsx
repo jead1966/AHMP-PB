@@ -32,9 +32,12 @@ import {
   Trophy as TrophyIcon,
   Layout,
   Activity,
-  Medal
+  Medal,
+  FileText
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 type Tab = 'dashboard' | 'associados' | 'mensalidades' | 'usuarios' | 'conteudo';
 
@@ -149,6 +152,14 @@ export default function AdminDashboard() {
     username: '',
     password: '',
     perfil: 'USUARIO'
+  });
+
+  // Report states
+  const [reportConfig, setReportConfig] = useState({
+    type: 'month' as 'day' | 'month' | 'year',
+    date: new Date().toISOString().split('T')[0],
+    month: new Date().getMonth() + 1,
+    year: new Date().getFullYear(),
   });
 
   const fetchData = useCallback(async (silent = false) => {
@@ -452,6 +463,123 @@ export default function AdminDashboard() {
     } catch (err: any) {
       console.error("ERRO COMPLETO:", err);
       safeAlert(`Erro ao gerar mensalidades: ${err?.message || err}`);
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const generateReportPDF = async () => {
+    setActionLoading('generating_pdf');
+    try {
+      const doc = new jsPDF();
+      const logoUrl = "https://ue5crmwsvgdovcsb.public.blob.vercel-storage.com/logo.png";
+      
+      // Filter data
+      let filteredData = [...mensalidades];
+      let periodLabel = "";
+      
+      if (reportConfig.type === 'day') {
+        const selectedDate = new Date(reportConfig.date + 'T00:00:00');
+        filteredData = filteredData.filter(m => {
+          if (!m.payment_date) return false;
+          const d = new Date(m.payment_date + 'T00:00:00');
+          return d.getTime() === selectedDate.getTime();
+        });
+        periodLabel = `Dia: ${new Date(reportConfig.date + 'T12:00:00').toLocaleDateString('pt-BR')}`;
+      } else if (reportConfig.type === 'month') {
+        filteredData = filteredData.filter(m => m.month === reportConfig.month && m.year === reportConfig.year);
+        periodLabel = `Mês: ${String(reportConfig.month).padStart(2, '0')}/${reportConfig.year}`;
+      } else {
+        filteredData = filteredData.filter(m => m.year === reportConfig.year);
+        periodLabel = `Ano: ${reportConfig.year}`;
+      }
+
+      // Add Logo (Header)
+      try {
+        const img = new (window as any).Image();
+        img.src = logoUrl;
+        img.crossOrigin = "anonymous";
+        await new Promise((resolve) => {
+          img.onload = resolve;
+          img.onerror = resolve;
+        });
+        if (img.complete && img.naturalWidth > 0) {
+          doc.addImage(img, 'PNG', 10, 10, 25, 25);
+        }
+      } catch (e) {
+        console.error("Error loading logo for PDF", e);
+      }
+      
+      // Header Text
+      doc.setFontSize(16);
+      doc.setTextColor(0, 51, 102); // Dark blue / primary color
+      doc.text("AHMP - Associação de Handebol Master da Paraíba", 40, 20);
+      
+      doc.setFontSize(14);
+      doc.setTextColor(51, 51, 51);
+      doc.text("Relatório de Mensalidades", 40, 30);
+      
+      doc.setFontSize(10);
+      doc.setTextColor(120, 120, 120);
+      doc.text(`${periodLabel} | Gerado em: ${new Date().toLocaleString('pt-BR')}`, 40, 38);
+
+      // Table
+      const tableData = filteredData.map(m => [
+        m.associados?.full_name || m.associados?.popular_name || "Associado Antigo",
+        `${String(m.month).padStart(2, '0')}/${m.year}`,
+        m.status === 'paga' ? formatBRL(m.amount) : "Pendente",
+        m.status.toUpperCase(),
+        m.payment_date ? new Date(m.payment_date).toLocaleDateString('pt-BR') : "-"
+      ]);
+
+      autoTable(doc, {
+        startY: 45,
+        head: [['Associado', 'Referência', 'Valor', 'Status', 'Pagamento']],
+        body: tableData,
+        theme: 'striped',
+        headStyles: { fillColor: [0, 51, 102], fontSize: 10, fontStyle: 'bold' },
+        styles: { fontSize: 9, cellPadding: 3 },
+        alternateRowStyles: { fillColor: [245, 245, 245] },
+      });
+
+      // Summary
+      const finalY = (doc as any).lastAutoTable.finalY + 15;
+      const totalPaid = filteredData.filter(m => m.status === 'paga').reduce((acc, m) => acc + (m.amount || 0), 0);
+      const totalPending = filteredData.filter(m => m.status === 'pendente').reduce((acc, m) => acc + (m.amount || 0), 0);
+      
+      if (finalY < 250) { // Check if we have space or need a new page (simplified)
+        doc.setFontSize(12);
+        doc.setTextColor(0, 51, 102);
+        doc.text("Resumo Financeiro:", 14, finalY);
+        
+        doc.setFontSize(10);
+        doc.setTextColor(51, 51, 51);
+        doc.text(`Total Recebido: ${formatBRL(totalPaid)}`, 14, finalY + 8);
+        doc.text(`Total em Aberto: ${formatBRL(totalPending)}`, 14, finalY + 15);
+        
+        doc.setFontSize(11);
+        doc.setTextColor(0);
+        doc.text(`Total Geral: ${formatBRL(totalPaid + totalPending)}`, 14, finalY + 25);
+      } else {
+        doc.addPage();
+        doc.setFontSize(12);
+        doc.setTextColor(0, 51, 102);
+        doc.text("Resumo Financeiro:", 14, 20);
+        
+        doc.setFontSize(10);
+        doc.setTextColor(51, 51, 51);
+        doc.text(`Total Recebido: ${formatBRL(totalPaid)}`, 14, 30);
+        doc.text(`Total em Aberto: ${formatBRL(totalPending)}`, 14, 40);
+        
+        doc.setFontSize(11);
+        doc.setTextColor(0);
+        doc.text(`Total Geral: ${formatBRL(totalPaid + totalPending)}`, 14, 55);
+      }
+
+      doc.save(`ahmp_relatorio_financeiro_${reportConfig.type}_${Date.now()}.pdf`);
+    } catch (err) {
+      console.error(err);
+      safeAlert("Erro ao gerar PDF do relatório.");
     } finally {
       setActionLoading(null);
     }
@@ -1346,6 +1474,94 @@ export default function AdminDashboard() {
                           </h3>
                         </div>
                         <LayoutDashboard className="absolute right-[-10px] bottom-[-10px] w-32 h-32 text-blue-500/20" />
+                      </div>
+
+                      {/* PDF Report Card */}
+                      <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm col-span-1 sm:col-span-2 lg:col-span-3">
+                        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                          <div className="flex items-center gap-4">
+                            <div className="p-3 bg-red-50 text-red-600 rounded-xl">
+                              <FileText className="w-6 h-6" />
+                            </div>
+                            <div>
+                              <h3 className="text-lg font-bold text-slate-800">Relatórios Financeiros</h3>
+                              <p className="text-sm text-slate-500">Gere relatórios detalhados em PDF para auditoria.</p>
+                            </div>
+                          </div>
+
+                          <div className="flex flex-wrap items-center gap-4">
+                            <div className="flex bg-slate-100 p-1 rounded-lg">
+                              {(['day', 'month', 'year'] as const).map((t) => (
+                                <button
+                                  key={t}
+                                  onClick={() => setReportConfig({ ...reportConfig, type: t })}
+                                  className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all uppercase ${reportConfig.type === t ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                                >
+                                  {t === 'day' ? 'Dia' : t === 'month' ? 'Mês' : 'Ano'}
+                                </button>
+                              ))}
+                            </div>
+
+                            <div className="flex gap-2">
+                              {reportConfig.type === 'day' && (
+                                <input 
+                                  type="date"
+                                  value={reportConfig.date}
+                                  onChange={(e) => setReportConfig({ ...reportConfig, date: e.target.value })}
+                                  className="px-3 py-2 border border-slate-200 rounded-lg text-sm bg-slate-50"
+                                />
+                              )}
+                              {reportConfig.type === 'month' && (
+                                <>
+                                  <select 
+                                    value={reportConfig.month}
+                                    onChange={(e) => setReportConfig({ ...reportConfig, month: parseInt(e.target.value) })}
+                                    className="px-3 py-2 border border-slate-200 rounded-lg text-sm bg-slate-50"
+                                  >
+                                    {[...Array(12)].map((_, i) => (
+                                      <option key={i + 1} value={i + 1}>
+                                        {new Date(0, i).toLocaleString('pt-BR', { month: 'long' })}
+                                      </option>
+                                    ))}
+                                  </select>
+                                  <select 
+                                    value={reportConfig.year}
+                                    onChange={(e) => setReportConfig({ ...reportConfig, year: parseInt(e.target.value) })}
+                                    className="px-3 py-2 border border-slate-200 rounded-lg text-sm bg-slate-50"
+                                  >
+                                    {[2024, 2025, 2026, 2027].map(y => (
+                                      <option key={y} value={y}>{y}</option>
+                                    ))}
+                                  </select>
+                                </>
+                              )}
+                              {reportConfig.type === 'year' && (
+                                <select 
+                                  value={reportConfig.year}
+                                  onChange={(e) => setReportConfig({ ...reportConfig, year: parseInt(e.target.value) })}
+                                  className="px-3 py-2 border border-slate-200 rounded-lg text-sm bg-slate-50"
+                                >
+                                  {[2024, 2025, 2026, 2027].map(y => (
+                                    <option key={y} value={y}>{y}</option>
+                                  ))}
+                                </select>
+                              )}
+                            </div>
+
+                            <button
+                              onClick={generateReportPDF}
+                              disabled={actionLoading === 'generating_pdf'}
+                              className="px-6 py-2.5 bg-slate-800 text-white rounded-lg font-bold text-sm hover:bg-slate-900 transition-all shadow-md flex items-center gap-2 disabled:opacity-50"
+                            >
+                              {actionLoading === 'generating_pdf' ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              ) : (
+                                <FileText className="w-4 h-4" />
+                              )}
+                              Exportar PDF
+                            </button>
+                          </div>
+                        </div>
                       </div>
                     </div>
 
