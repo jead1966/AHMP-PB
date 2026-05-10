@@ -1,6 +1,4 @@
 {
-  "name": "AHMP",
-  "description": "Site da Associação de Handebol Master da Paraíba",
-  "requestFramePermissions": [],
-  "majorCapabilities": []
+  "name": "AHMP-PB",
+  "description": "Site da Associação de Handebol Master da Paraíba"
 }

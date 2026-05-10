@@ -68,7 +68,8 @@ export default function AdminDashboard() {
     month: new Date().getMonth() + 1,
     year: new Date().getFullYear(),
     amount: 60.00,
-    payment_method: 'Pix'
+    payment_method: 'Pix',
+    payment_date: new Date().toISOString().split('T')[0]
   });
 
   // Generate Mensalidades Form
@@ -349,7 +350,7 @@ export default function AdminDashboard() {
           .from('mensalidades')
           .update({
             status: 'paga',
-            payment_date: new Date().toISOString().split('T')[0],
+            payment_date: paymentForm.payment_date,
             amount: paymentForm.amount
           })
           .eq('id', existing.id);
@@ -365,7 +366,7 @@ export default function AdminDashboard() {
             year: paymentForm.year,
             amount: paymentForm.amount,
             status: 'paga',
-            payment_date: new Date().toISOString().split('T')[0]
+            payment_date: paymentForm.payment_date
           });
         
         if (insertError) throw insertError;
@@ -377,7 +378,8 @@ export default function AdminDashboard() {
         month: new Date().getMonth() + 1,
         year: new Date().getFullYear(),
         amount: 60.00,
-        payment_method: 'Pix'
+        payment_method: 'Pix',
+        payment_date: new Date().toISOString().split('T')[0]
       });
       await fetchData(true);
       safeAlert('Pagamento registrado com sucesso!');
@@ -2163,6 +2165,17 @@ export default function AdminDashboard() {
                       <option value={new Date().getFullYear() + 1}>{new Date().getFullYear() + 1}</option>
                     </select>
                   </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-1.5 flex items-center gap-1.5">Data do Pagamento</label>
+                  <input 
+                    type="date"
+                    required
+                    value={paymentForm.payment_date}
+                    onChange={e => setPaymentForm({...paymentForm, payment_date: e.target.value})}
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-sm font-medium"
+                  />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
