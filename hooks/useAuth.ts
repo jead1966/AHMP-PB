@@ -19,7 +19,7 @@ export function useAuth() {
           .from('associados')
           .select('*')
           .eq('user_id', session.user.id)
-          .single();
+          .maybeSingle();
         if (error) console.error('Error fetching profile:', error);
         if (mounted) setProfile(data);
       }
@@ -36,7 +36,7 @@ export function useAuth() {
           .from('associados')
           .select('*')
           .eq('user_id', session.user.id)
-          .single();
+          .maybeSingle();
         if (error) console.error('Error fetching profile on change:', error);
         if (mounted) setProfile(data);
       } else {

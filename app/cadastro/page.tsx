@@ -5,6 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { User, Camera, Edit2, Activity, UserSquare, CheckCircle2, AlertCircle, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { maskCPF } from '@/lib/cpf';
 import { useRouter } from 'next/navigation';
 
 export default function Cadastro() {
@@ -12,6 +13,7 @@ export default function Cadastro() {
   const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
   const [birthDate, setBirthDate] = useState('');
+  const [currentCpf, setCurrentCpf] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
@@ -61,7 +63,7 @@ export default function Cadastro() {
           .from('associados')
           .select('id')
           .eq('user_id', session.user.id)
-          .single();
+          .maybeSingle();
         
         if (data) {
           router.push('/painel-associado');
@@ -95,6 +97,15 @@ export default function Cadastro() {
     setErrorMessage('');
 
     const formData = new FormData(event.currentTarget);
+    const rawCpf = formData.get('documentId') as string;
+    if (rawCpf.length !== 14) {
+      setIsLoading(false);
+      setStatus('error');
+      setErrorMessage('O CPF deve conter exatamente 14 caracteres.');
+      return;
+    }
+
+    const emailForAuth = `${rawCpf.replace(/\D/g, '')}@ahmp.com.br`;
     const email = formData.get('email') as string;
     const password = formData.get('password') as string;
     const fullName = formData.get('fullName') as string;
@@ -102,9 +113,15 @@ export default function Cadastro() {
     let authDataResult: any = null;
 
     try {
+      // CLEAR CACHE OR PREVIOUS SESSION
+      await supabase.auth.signOut();
+
+      let userForDb: any = null;
+      let isExistingAuthWithoutProfile = false;
+
       // 1. Create Auth User
       const { data: authData, error: authError } = await supabase.auth.signUp({
-        email,
+        email: emailForAuth,
         password,
         options: {
           data: {
@@ -113,64 +130,136 @@ export default function Cadastro() {
         }
       });
 
-      if (authError) throw authError;
-      if (!authData.user) throw new Error('Falha ao criar usuário.');
-      authDataResult = authData;
+      if (authError) {
+        console.log("AuthError Object:", authError);
+        console.log("AuthError Stringified:", JSON.stringify(authError));
+        const errMsg = authError?.message || '';
+        
+        if (errMsg.includes('already registered') || errMsg.includes('User already') || errMsg.includes('já registrado') || errMsg.includes('already exists')) {
+          // User already exists in auth, try to sign in
+          const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+            email: emailForAuth,
+            password
+          });
+          
+          if (signInError) {
+             throw new Error('Este CPF já consta no sistema de autenticação, mas a senha informada não confere com a gravada anteriormente. Retorne para o login.');
+          }
+          userForDb = signInData.user;
+          isExistingAuthWithoutProfile = true;
+        } else {
+          if (errMsg.includes('Password should be at least') || errMsg.includes('weak_password')) {
+            throw new Error('A senha deve ter pelo menos 6 caracteres.');
+          }
+          throw new Error('Ocorreu um erro no sistema de login: ' + (errMsg || 'Erro desconhecido.'));
+        }
+      } else {
+        if (!authData.user) throw new Error('Falha ao criar usuário.');
+        userForDb = authData.user;
+        
+        if (authData.user?.identities?.length === 0) {
+          // Alternative "already registered" response format from Supabase
+          const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+            email: emailForAuth,
+            password
+          });
+          
+          if (signInError) {
+             throw new Error('Este CPF já consta no sistema de autenticação, mas a senha informada não confere com a gravada anteriormente. Retorne para o login.');
+          }
+          userForDb = signInData.user;
+          isExistingAuthWithoutProfile = true;
+        }
+      }
+      
+      authDataResult = { user: userForDb, session: null }; // Just for error logging context
+
+      if (isExistingAuthWithoutProfile) {
+        // Also verify they don't already have an associado record
+        const { data: existingProfile } = await supabase
+          .from('associados')
+          .select('id')
+          .eq('user_id', userForDb.id)
+          .maybeSingle();
+          
+        if (existingProfile) {
+          throw new Error('A conta com este CPF já está completamente cadastrada. Vá para a tela de login.');
+        }
+      }
 
       // 2. Upload Photo if selected
-      const photoUrl = await uploadPhoto(authData.user.id);
+      // const photoUrl = await uploadPhoto(userForDb.id);
 
       // 3. Store in Database
       const associadoData = {
         full_name: fullName,
-        popular_name: formData.get('popularName'),
-        birthday: formData.get('birthday'),
-        age: currentAge,
-        identity_document: formData.get('identityDocument'),
-        document_id: formData.get('documentId'),
-        email: email,
-        phone: formData.get('phone'),
-        category: formData.get('category'),
-        position: formData.get('position'),
-        club: formData.get('club'),
-        user_id: authData.user.id,
-        photo_url: photoUrl,
+        popular_name: formData.get('popularName') || null,
+        birthday: formData.get('birthday') || null,
+        age: currentAge || null,
+        identity_document: formData.get('identityDocument') || null,
+        document_id: formData.get('documentId') || null,
+        email: email || null,
+        phone: formData.get('phone') || null,
+        category: formData.get('category') || null,
+        position: formData.get('position') || null,
+        club: formData.get('club') || null,
+        user_id: userForDb.id,
         status: 'pendente',
       };
 
       const { error: dbError } = await supabase
         .from('associados')
-        .upsert([{
+        .insert([{
           ...associadoData
-        }], { onConflict: 'user_id' });
+        }]);
 
-      if (dbError) throw dbError;
+      if (dbError) {
+        console.error('Supabase DB Error:', {
+           message: dbError.message,
+           code: dbError.code,
+           details: dbError.details,
+           hint: dbError.hint,
+           full: dbError
+        });
+        throw new Error(`Erro ao salvar no banco [${dbError.code || 'UNKNOWN'}]: ` + (dbError.message || dbError.details || JSON.stringify(dbError) || 'Erro desconhecido'));
+      }
       
       setStatus('success');
       setTimeout(() => {
         router.push('/painel-associado');
       }, 2000);
     } catch (error: any) {
-      console.error('Erro ao cadastrar:', error);
+      console.error('Erro ao cadastrar - detalhes:', error);
+      console.log('Error Type:', typeof error);
+      if (error && typeof error === 'object') {
+        console.log('Error Keys:', Object.keys(error));
+        console.dir(error);
+      }
+      
+      let msg = 'Erro ao realizar cadastro. Verifique os dados novamente.';
+      if (error instanceof Error) {
+        msg = error.message;
+      } else if (typeof error === 'string') {
+        msg = error;
+      } else if (error && typeof error === 'object') {
+        msg = error.message || error.error_description || error.details || JSON.stringify(error) || msg;
+      }
+
       setStatus('error');
       
-      let msg = error.message || 'Erro ao realizar cadastro.';
-      
       // Handle specific Supabase / Postgres errors for better UX
-      if (msg.includes('row-level security policy')) {
-        msg = 'Erro de permissão no banco de dados. Por favor, tente novamente ou entre em contato com o suporte se o erro persistir.';
-        console.error('RLS Violation during registration:', {
-          userId: authDataResult?.user?.id,
-          hasSession: !!authDataResult?.session
-        });
-      } else if (msg.includes('already registered')) {
-        msg = 'Opa! Esse e-mail já foi cadastrado anteriormente em nosso sistema. Você não precisa se cadastrar novamente. Por favor, vá para a tela de login e entre com sua senha.';
-        setStatus('error');
-      } else if (msg.includes('duplicate key value')) {
-        if (msg.includes('document_id')) {
-          msg = 'Este CPF já está cadastrado em nosso sistema.';
-        } else {
-          msg = 'Algum dos dados informados já consta em nosso cadastro.';
+      if (typeof msg === 'string') {
+        if (msg.includes('row-level security policy')) {
+          msg = 'Erro de permissão no banco de dados. Por favor, tente novamente ou entre em contato com o suporte se o erro persistir.';
+        } else if (msg.includes('already registered') || msg.includes('já está completamente cadastrada')) {
+          msg = 'Opa! Esse CPF já possui um pré-cadastro ou registro em nosso sistema. Você não precisa se cadastrar novamente. Por favor, vá para a tela de login.';
+          setStatus('error');
+        } else if (msg.includes('duplicate key value')) {
+          if (msg.includes('document_id')) {
+            msg = 'Este CPF já está cadastrado em nosso sistema.';
+          } else {
+            msg = 'Algum dos dados informados já consta em nosso cadastro.';
+          }
         }
       }
 
@@ -260,8 +349,18 @@ export default function Cadastro() {
                 <input className="block w-full rounded-lg border-outline-variant bg-surface-container-lowest py-3 px-4 text-on-surface focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-body-md border" id="identityDocument" name="identityDocument" placeholder="00.000.000-0" type="text" />
               </div>
               <div>
-                <label className="block font-label-bold text-label-bold text-on-surface mb-1" htmlFor="documentId">CPF</label>
-                <input className="block w-full rounded-lg border-outline-variant bg-surface-container-lowest py-3 px-4 text-on-surface focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-body-md border" id="documentId" name="documentId" placeholder="000.000.000-00" type="text" />
+                <label className="block font-label-bold text-label-bold text-on-surface mb-1" htmlFor="documentId">CPF (Código de Acesso)</label>
+                <input 
+                  className="block w-full rounded-lg border-outline-variant bg-surface-container-lowest py-3 px-4 text-on-surface focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-body-md border" 
+                  id="documentId" 
+                  name="documentId" 
+                  placeholder="000.000.000-00" 
+                  type="text" 
+                  required
+                  maxLength={14}
+                  value={currentCpf}
+                  onChange={(e) => setCurrentCpf(maskCPF(e.target.value))}
+                />
               </div>
               <div>
                 <label className="block font-label-bold text-label-bold text-on-surface mb-1" htmlFor="email">Email</label>

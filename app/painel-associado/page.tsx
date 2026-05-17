@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { formatBRL } from '@/lib/utils';
+import { maskCPF } from '@/lib/cpf';
 import { 
   User, 
   CreditCard, 
@@ -171,8 +172,13 @@ export default function PainelAssociado() {
   }, [user, fetchMensalidades]);
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    router.push('/');
+    try {
+      await supabase.auth.signOut();
+    } catch (error) {
+      console.error('Logout erro:', error);
+    } finally {
+      window.location.href = '/';
+    }
   };
 
   const handleUpdateData = async (e: React.FormEvent) => {
@@ -566,9 +572,10 @@ export default function PainelAssociado() {
                           <input 
                             name="document_id" 
                             id="document_id" 
+                            maxLength={14}
                             className="w-full rounded-xl border border-outline bg-white py-3 px-4 text-on-surface focus:ring-2 focus:ring-primary/20 transition-all outline-none" 
                             value={formProfile.document_id}
-                            onChange={(e) => setFormProfile({...formProfile, document_id: e.target.value})}
+                            onChange={(e) => setFormProfile({...formProfile, document_id: maskCPF(e.target.value)})}
                           />
                           <Edit2 className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-primary opacity-40" />
                         </div>

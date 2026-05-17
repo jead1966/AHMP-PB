@@ -6,6 +6,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { formatBRL } from '@/lib/utils';
+import { maskCPF } from '@/lib/cpf';
 import { 
   Users, 
   CreditCard, 
@@ -280,10 +281,15 @@ export default function AdminDashboard() {
   }, [user, isAdminLocally, fetchData]);
 
   const handleLogout = async () => {
-    sessionStorage.removeItem('isAdmin');
-    sessionStorage.removeItem('adminProfile');
-    await supabase.auth.signOut();
-    router.push('/');
+    try {
+      sessionStorage.removeItem('isAdmin');
+      sessionStorage.removeItem('adminProfile');
+      await supabase.auth.signOut();
+    } catch (error) {
+      console.error(error);
+    } finally {
+      window.location.href = '/';
+    }
   };
 
   const approveMensalidade = async (id: string) => {
@@ -351,7 +357,8 @@ export default function AdminDashboard() {
           .update({
             status: 'paga',
             payment_date: paymentForm.payment_date,
-            amount: paymentForm.amount
+            amount: paymentForm.amount,
+            payment_method: paymentForm.payment_method
           })
           .eq('id', existing.id);
         
@@ -366,7 +373,8 @@ export default function AdminDashboard() {
             year: paymentForm.year,
             amount: paymentForm.amount,
             status: 'paga',
-            payment_date: paymentForm.payment_date
+            payment_date: paymentForm.payment_date,
+            payment_method: paymentForm.payment_method
           });
         
         if (insertError) throw insertError;
@@ -578,7 +586,8 @@ export default function AdminDashboard() {
         doc.text(`Total Geral: ${formatBRL(totalPaid + totalPending)}`, 14, 55);
       }
 
-      doc.save(`ahmp_relatorio_financeiro_${reportConfig.type}_${Date.now()}.pdf`);
+      const timestamp = new Date().getTime();
+      doc.save(`ahmp_relatorio_financeiro_${reportConfig.type}_${timestamp}.pdf`);
     } catch (err) {
       console.error(err);
       safeAlert("Erro ao gerar PDF do relatório.");
@@ -2406,9 +2415,10 @@ export default function AdminDashboard() {
                     <input 
                       name="document_id" 
                       id="document_id" 
+                      maxLength={14}
                       className="w-full rounded-xl border border-slate-300 bg-white py-3 px-4 text-slate-900 focus:ring-2 focus:ring-blue-500/20 transition-all outline-none" 
                       value={associadoForm.document_id}
-                      onChange={(e) => setAssociadoForm({...associadoForm, document_id: e.target.value})}
+                      onChange={(e) => setAssociadoForm({...associadoForm, document_id: maskCPF(e.target.value)})}
                     />
                   </div>
                   <div>

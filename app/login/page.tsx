@@ -7,9 +7,10 @@ import Link from 'next/link';
 import { LogIn, AlertCircle, Loader2, ArrowRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
+import { maskCPF } from '@/lib/cpf';
 
 export default function Login() {
-  const [email, setEmail] = useState('');
+  const [cpf, setCpf] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -28,8 +29,14 @@ export default function Login() {
     setLoading(true);
 
     try {
+      // Allow login with real email as fallback if it contains @ (for old users), otherwise use CPF formatting
+      let loginEmail = cpf;
+      if (!cpf.includes('@')) {
+        loginEmail = `${cpf.replace(/\D/g, '')}@ahmp.com.br`;
+      }
+
       const { error: loginError } = await supabase.auth.signInWithPassword({
-        email,
+        email: loginEmail,
         password,
       });
 
@@ -38,7 +45,7 @@ export default function Login() {
       router.push('/painel-associado');
     } catch (err: any) {
       console.error(err);
-      setError('E-mail ou senha incorretos. Por favor, tente novamente.');
+      setError('CPF ou senha incorretos. Por favor, tente novamente.');
     } finally {
       setLoading(false);
     }
@@ -77,14 +84,18 @@ export default function Login() {
 
           <form onSubmit={handleLogin} className="space-y-5">
             <div>
-              <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5" htmlFor="email">E-mail</label>
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5" htmlFor="cpf">CPF (Código de Acesso)</label>
               <input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                id="cpf"
+                type="text"
+                maxLength={14}
+                value={cpf}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setCpf(val.includes('@') ? val : maskCPF(val)); // if they type email, allow it, else mask as CPF
+                }}
                 className="block w-full rounded-xl border border-slate-200 bg-slate-50 py-3.5 px-4 text-slate-900 focus:bg-white focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 outline-none transition-all font-work-sans text-sm"
-                placeholder="seu@email.com"
+                placeholder="000.000.000-00"
                 required
               />
             </div>
